@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gamesbosta.fan</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        /* --- CSS Variables & Core Setup --- */
+        :root {
+            --bg-dark: #1a202c;
+            --bg-medium: #2d3748;
+            --bg-light: #4a5568;
+            --text-light: #e2e8f0;
+            --text-dark: #1a202c;
+            --pawn1-color: #e53e3e; --pawn1-glow: #fed7d7;
+            --pawn2-color: #3182ce; --pawn2-glow: #bee3f8;
+            --pawn3-color: #38a169; --pawn3-glow: #c6f6d5;
+            --pawn4-color: #d69e2e; --pawn4-glow: #feebc8;
+            --accent-color: #805ad5;
+            --accent-hover: #9f7aea;
+            --card-size: clamp(50px, 15vmin, 100px);
+            --gap-size: 8px;
+            --font-family: 'Poppins', sans-serif;
+            --player-tint-color: transparent; /* For player turn background tint */
+            --gb-bg: #0f0f12;
+            --gb-surface: #111216;
+            --gb-accent: #ff4d6d;
+            --gb-accent-2: #ffd166;
+            --gb-card: rgba(255,255,255,0.03);
+            --gb-text: #e6e6e6;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            /* --- Animated Background --- */
+            background: linear-gradient(315deg, #1a202c, #2d3748, #1a202c);
+            background-size: 400% 400%;
+            animation: gradient-bg 20s ease infinite;
+        }
+        
+        @keyframes gradient-bg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #gb-app {
+            padding: 20px;
+        }
+
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            perspective: 1000px;
+        }
+
+        .game-card {
+            background-color: var(--gb-card);
+            border-radius: 12px;
+            padding: 20px;
+            text-decoration: none;
+            color: var(--gb-text);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            will-change: transform;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px) scale(1.05) rotateX(10deg) rotateY(5deg);
+            box-shadow: 0 20px 30px rgba(0,0,0,0.3);
+        }
+
+        .game-card h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--gb-accent);
+        }
+
+        .game-card p {
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+
+        .game-card-tags {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .game-card-tags span {
+            background-color: var(--gb-surface);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .page-enter {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .page-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 300ms, transform 300ms;
+        }
+
+        .page-exit {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .page-exit-active {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 300ms, transform 300ms;
+        }
+
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+            animation: fall 5s linear forwards;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) rotateZ(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) rotateZ(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
+        .primary-button {
+            background-color: var(--accent-color);
+            color: var(--text-light);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .primary-button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+        
+        .intro-panel, .score-overlay, .pass-screen, .reveal-screen, .result-overlay {
+            text-align: center;
+        }
+
+        .settings {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .setting {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 300px;
+        }
+
+        select, input {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid var(--bg-light);
+            background-color: var(--bg-medium);
+            color: var(--text-light);
+        }
+
+        .timer {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .choices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .game-board {
+            display: grid;
+            gap: 10px;
+        }
+
+        .card {
+            width: var(--card-size);
+            height: var(--card-size);
+            background-color: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(var(--card-size) * 0.6);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: transform 0.3s, background-color 0.3s;
+            transform-style: preserve-3d;
+        }
+        
+        .card.flipped {
+            background-color: var(--accent-color);
+            transform: rotateY(180deg);
+        }
+        
+        .target {
+            width: 50px;
+            height: 50px;
+            background-color: var(--pawn1-color);
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+        }
+        
+        #draw-canvas {
+            border: 2px solid var(--text-light);
+            background-color: var(--bg-medium);
+            border-radius: 8px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="gb-app"></div>
+
+    <script type="module">
+        // --- DATA STORE ---
+        const gameAssets = {
+            "charades": {
+              "easy": ["apple", "banana", "car", "dog", "cat", "house", "ball", "sun", "moon", "star"],
+              "normal": ["computer", "guitar", "painting", "singing", "dancing", "reading", "writing", "running", "swimming", "flying"],
+              "hard": ["photosynthesis", "onomatopoeia", "serendipity", "ephemeral", "ubiquitous", "mellifluous", "petrichor", "sonder", "defenestration", "pulchritudinous"]
+            },
+            "quiz": {
+              "general": [{ "id": 1, "text": "What is the capital of France?", "choices": ["London", "Paris", "Berlin", "Madrid"], "correctIndex": 1, "explanation": "Paris is the capital of France." }, { "id": 2, "text": "What is the largest planet in our solar system?", "choices": ["Mars", "Jupiter", "Saturn", "Earth"], "correctIndex": 1, "explanation": "Jupiter is the largest planet in our solar system." }],
+              "movies": [{ "id": 3, "text": "Who directed the movie 'The Shawshank Redemption'?", "choices": ["Steven Spielberg", "Quentin Tarantino", "Frank Darabont", "Martin Scorsese"], "correctIndex": 2, "explanation": "Frank Darabont directed 'The Shawshank Redemption'." }],
+              "history": [{ "id": 4, "text": "In what year did the Titanic sink?", "choices": ["1905", "1912", "1920", "1931"], "correctIndex": 1, "explanation": "The Titanic sank in 1912." }]
+            },
+            "pictionary": {
+              "easy": ["apple", "banana", "car", "dog", "cat", "house", "ball", "sun", "moon", "star"],
+              "normal": ["computer", "guitar", "painting", "singing", "dancing", "reading", "writing", "running", "swimming", "flying"],
+              "hard": ["photosynthesis", "onomatopoeia", "serendipity", "ephemeral", "ubiquitous", "mellifluous", "petrichor", "sonder", "defenestration", "pulchritudinous"]
+            },
+            "memory": [ "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦" ]
+        };
+
+        // --- UI / components.js ---
+        function createGameCard(game) {
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            card.dataset.gameId = game.id;
+            card.innerHTML = `
+                <div class="game-card-content">
+                    <h3>${game.title}</h3>
+                    <p>${game.short}</p>
+                    <div class="game-card-tags">
+                        <span>${game.players} Players</span>
+                        <span>${'★'.repeat(game.complexity)}${'☆'.repeat(5 - game.complexity)}</span>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // --- UI / confetti.js ---
+        function triggerConfetti() {
+            const container = document.createElement('div');
+            container.className = 'confetti-container';
+            document.body.appendChild(container);
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                container.appendChild(confetti);
+            }
+            setTimeout(() => {
+                container.remove();
+            }, 5000);
+        }
+
+        // --- router.js ---
+        const routes = {};
+        function router() {
+            const path = window.location.hash.slice(1) || '/';
+            const [base, ...params] = path.split('/');
+            const routeKey = `/${base}`;
+            
+            if (routes[routeKey]) {
+                routes[routeKey](...params);
+            } else if (routes['/']) {
+                routes['/']();
+            }
+        }
+        function addRoute(path, handler) { routes[path] = handler; }
+        function initRouter() {
+            window.addEventListener('hashchange', router);
+            window.addEventListener('load', router);
+        }
+        function navigate(path) { window.location.hash = path; }
+
+        // --- games/base.js ---
+        class Game {
+            constructor(container, manifestEntry) {
+                this.container = container;
+                this.manifestEntry = manifestEntry;
+                this.settings = {};
+                this.timerInterval = null;
+            }
+            init(settings) { this.settings = settings; this.render(); }
+            start() {}
+            pause() {}
+            end() {}
+            render() {}
+            destroy() {
+                clearInterval(this.timerInterval);
+                this.container.innerHTML = '';
+            }
+            createBackButton() {
+                const button = document.createElement('button');
+                button.textContent = 'Back to Hub';
+                button.className = 'primary-button back-to-hub-button';
+                button.onclick = () => navigate('#/');
+                return button;
+            }
+        }
+        
+        // --- All Game Classes ---
+
+        class CharadesGame extends Game {
+            constructor(container, manifestEntry) {
+                super(container, manifestEntry);
+                this.words = gameAssets.charades;
+                this.score = { correct: 0, skipped: 0 };
+            }
+
+            render() {
+                this.container.innerHTML = `
+                    <div class="game-container charades-game">
+                        <div class="intro-panel">
+                            <h2>Charades</h2>
+                            <p>Tap 'Ready' -> hand phone to actor -> Actor taps 'Reveal' (private word) -> countdown starts</p>
+                            <div class="settings">
+                                <div class="setting">
+                                    <label for="timePerTurn">Time per turn:</label>
+                                    <select id="timePerTurn"><option value="30">30s</option><option value="60" selected>60s</option><option value="90">90s</option></select>
+                                </div>
+                                <div class="setting">
+                                    <label for="difficulty">Difficulty:</label>
+                                    <select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select>
+                                </div>
+                            </div>
+                            <button class="primary-button start-button">Start</button>
+                        </div>
+                        <div class="game-screen hidden">
+                            <div class="pass-screen"><h2>Pass the phone to the actor</h2><button class="primary-button ready-button">Ready</button></div>
+                            <div class="reveal-screen hidden"><button class="primary-button reveal-button">Reveal Word</button></div>
+                            <div class="word-screen hidden"><div class="timer"></div><div class="word" style="font-size: 2.5rem; margin: 20px;"></div><div class="actions"><button class="primary-button correct-button">Correct</button><button class="primary-button skip-button">Skip</button></div></div>
+                        </div>
+                        <div class="score-overlay hidden">
+                            <h2>Turn Over!</h2>
+                            <div class="scores" style="font-size: 
+1.5rem;"></div><div class="actions"><button class="primary-button replay-button">Play Again</button></div>
+                        </div>
+                    </div>
+                `;
+                this.bindEvents();
+                this.container.querySelector('.score-overlay .actions').appendChild(this.createBackButton());
+            }
+
+            bindEvents() {
+                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
+                this.container.querySelector('.ready-button').addEventListener('click', () => this.showRevealScreen());
+                this.container.querySelector('.reveal-button').addEventListener('click', () => this.showWordScreen());
+                this.container.querySelector('.correct-button').addEventListener('click', () => this.nextWord(true));
+                this.container.querySelector('.skip-button').addEventListener('click', () => this.nextWord(false));
+                this.container.querySelector('.replay-button').addEventListener('click', () => this.render());
+            }
+
+            startGame() {
+                this.container.querySelector('.intro-panel').classList.add('hidden');
+                this.container.querySelector('.game-screen').classList.remove('hidden');
+                this.score = { correct: 0, skipped: 0 };
+            }
+
+            showRevealScreen() {
+                this.container.querySelector('.pass-screen').classList.add('hidden');
+                this.container.querySelector('.reveal-screen').classList.remove('hidden');
+            }
+
+            showWordScreen() {
+                this.container.querySelector('.reveal-screen').classList.add('hidden');
+                this.container.querySelector('.word-screen').classList.remove('hidden');
+                this.startTurn();
+            }
+
+            startTurn() {
+                this.nextWord(null); // Load first word
+                const timePerTurn = parseInt(this.container.querySelector('#timePerTurn').value, 10);
+                this.startTimer(timePerTurn);
+            }
+
+            startTimer(duration) {
+                let timeLeft = duration;
+                const timerElement = this.container.querySelector('.timer');
+                const updateTimer = () => {
+                    timerElement.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        this.endTurn();
+                    } else {
+                        timeLeft--;
+                    }
+                };
+                updateTimer();
+                this.timerInterval = setInterval(updateTimer, 1000);
+            }
+            
+            nextWord(isCorrect) {
+                 if (isCorrect === true) {
+                    this.score.correct++;
+                } else if (isCorrect === false) {
+                    this.score.skipped++;
+                }
+
+                const difficulty = this.container.querySelector('#difficulty').value;
+                const wordList = this.words[difficulty] || [];
+                const word = wordList[Math.floor(Math.random() * wordList.length)];
+                this.container.querySelector('.word').textContent = word;
+            }
+
+            endTurn() {
+                clearInterval(this.timerInterval);
+                this.showScoreScreen();
+            }
+
+            showScoreScreen() {
+                this.container.querySelector('.game-screen').classList.add('hidden');
+                this.container.querySelector('.score-overlay').classList.remove('hidden');
+                this.container.querySelector('.scores').innerHTML = `Correct: ${this.score.correct}<br>Skipped: ${this.score.skipped}`;
+            }
+        }
+
+        class QuizGame extends Game {
+            constructor(container, manifestEntry) {
+                super(container, manifestEntry);
+                this.questions = gameAssets.quiz;
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+            }
+
+            render() {
+                this.container.innerHTML = `
+                    <div class="game-container quiz-game">
+                        <div class="intro-panel">
+                            <h2>Quiz Party</h2>
+                            <p>Choose your settings and start the quiz!</p>
+                            <div class="settings">
+                                <div class="setting"><label for="numberOfQuestions">Number of questions:</label><select id="numberOfQuestions"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option></select></div>
+                                <div class="setting"><label for="timePerQuestion">Time per question:</label><select id="timePerQuestion"><option value="10">10s</option><option value="20" selected>20s</option><option value="30">30s</option></select></div>
+                                <div class="setting"><label for="category">Category:</label><select id="category"><option value="general" selected>General</option><option value="movies">Movies</option><option value="history">History</option></select></div>
+                            </div>
+                            <button class="primary-button start-button">Start</button>
+                        </div>
+                        <div class="game-screen hidden">
+                            <div class="timer"></div>
+                            <div class="question" style="font-size: 1.5rem; margin-bottom: 20px;"></div>
+                            <div class="choices"></div>
+                        </div>
+                        <div class="score-overlay hidden">
+                            <h2>Score</h2>
+                            <div class="scores" style="font-size: 1.5rem;"></div>
+                            <div class="actions"><button class="primary-button replay-button">Replay</button></div>
+                        </div>
+                    </div>
+                `;
+                this.bindEvents();
+                this.container.querySelector('.score-overlay .actions').appendChild(this.createBackButton());
+            }
+
+            bindEvents() {
+                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
+                this.container.querySelector('.replay-button').addEventListener('click', () => this.render());
+            }
+
+            startGame() {
+                this.container.querySelector('.intro-panel').classList.add('hidden');
+                this.container.querySelector('.game-screen').classList.remove('hidden');
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+                this.showNextQuestion();
+            }
+
+            showNextQuestion() {
+                clearInterval(this.timerInterval);
+                const category = this.container.querySelector('#category').value;
+                const questions = this.questions[category];
+                const numberOfQuestions = parseInt(this.container.querySelector('#numberOfQuestions').value, 10);
+
+                if (this.currentQuestionIndex >= numberOfQuestions || this.currentQuestionIndex >= questions.length) {
+                    this.showScoreScreen();
+                    return;
+                }
+
+                const question = questions[this.currentQuestionIndex];
+                this.container.querySelector('.question').textContent = question.text;
+
+                const choicesContainer = this.container.querySelector('.choices');
+                choicesContainer.innerHTML = '';
+                question.choices.forEach((choice, index) => {
+                    const choiceButton = document.createElement('button');
+                    choiceButton.className = 'primary-button';
+                    choiceButton.textContent = choice;
+                    choiceButton.addEventListener('click', () => this.checkAnswer(index === question.correctIndex));
+                    choicesContainer.appendChild(choiceButton);
+                });
+
+                const timePerQuestion = parseInt(this.container.querySelector('#timePerQuestion').value, 10);
+                this.startTimer(timePerQuestion);
+            }
+
+            startTimer(duration) {
+                let timeLeft = duration;
+                const timerElement = this.container.querySelector('.timer');
+                const updateTimer = () => {
+                    timerElement.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        this.checkAnswer(false); // Time's up, counts as wrong
+                    } else {
+                        timeLeft--;
+                    }
+                };
+                updateTimer();
+                this.timerInterval = setInterval(updateTimer, 1000);
+            }
+
+            checkAnswer(isCorrect) {
+                if (isCorrect) {
+                    this.score += 10;
+                }
+                this.currentQuestionIndex++;
+                this.showNextQuestion();
+            }
+
+            showScoreScreen() {
+                clearInterval(this.timerInterval);
+                this.container.querySelector('.game-screen').classList.add('hidden');
+                this.container.querySelector('.score-overlay').classList.remove('hidden');
+                this.container.querySelector('.scores').textContent = `Your score: ${this.score}`;
+            }
+        }
+
+        class MemoryGame extends Game {
+            constructor(container, manifestEntry) {
+                super(container, manifestEntry);
+                this.icons = gameAssets.memory;
+                this.flippedCards = [];
+                this.matchedPairs = 0;
+            }
+
+            render() {
+                this.container.innerHTML = `
+                   <div class="game-container memory-game">
+                        <div class="intro-panel">
+                            <h2>Memory Match</h2>
+                            <p>Choose your settings and start the game!</p>
+                            <div class="settings">
+                                <div class="setting"><label for="gridSize">Grid size:</label><select id="gridSize"><option value="2x2">2x2</option><option value="4x4" selected>4x4</option><option value="6x6">6x6</option></select></div>
+                                <div class="setting"><label for="theme">Theme:</label><select id="theme"><option value="icons" selected>Icons</option></select></div>
+                            </div>
+                            <button class="primary-button start-button">Start</button>
+                        </div>
+                        <div class="game-screen hidden"><div class="game-board"></div></div>
+                        <div class="score-overlay hidden">
+                            <h2>You Won!</h2>
+                            <div class="actions"><button class="primary-button replay-button">Replay</button></div>
+                        </div>
+                    </div>
+                `;
+                this.bindEvents();
+                this.container.querySelector('.score-overlay .actions').appendChild(this.createBackButton());
+            }
+
+            bindEvents() {
+                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
+                this.container.querySelector('.replay-button').addEventListener('click', () => this.render());
+            }
+
+            startGame() {
+                this.container.querySelector('.intro-panel').classList.add('hidden');
+                this.container.querySelector('.game-screen').classList.remove('hidden');
+                this.flippedCards = [];
+                this.matchedPairs = 0;
+                this.renderBoard();
+            }
+
+            renderBoard() {
+                const board = this.container.querySelector('.game-board');
+                const gridSize = this.container.querySelector('#gridSize').value;
+                const [rows, cols] = gridSize.split('x').map(Number);
+                const numPairs = (rows * cols) / 2;
+                const icons = this.icons.slice(0, numPairs);
+                const cards = [...icons, ...icons].sort(() => Math.random() - 0.5);
+
+                board.innerHTML = '';
+                board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+                cards.forEach((icon, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.dataset.icon = icon;
+                    card.dataset.index = index;
+                    
+                    const cardFront = document.createElement('div');
+                    cardFront.className = 'card-front';
+
+                    const cardBack = document.createElement('div');
+                    cardBack.className = 'card-back';
+                    cardBack.textContent = icon;
+                    
+                    card.appendChild(cardFront);
+                    card.appendChild(cardBack);
+                    
+                    card.addEventListener('click', () => this.flipCard(card));
+                    board.appendChild(card);
+                });
+            }
+
+            flipCard(card) {
+                if (this.flippedCards.length === 2 || card.classList.contains('flipped') || card.classList.contains('matched')) {
+                    return;
+                }
+
+                card.classList.add('flipped');
+                card.textContent = card.dataset.icon;
+                this.flippedCards.push(card);
+
+                if (this.flippedCards.length === 2) {
+                    this.checkForMatch();
+                }
+            }
+
+            checkForMatch() {
+                const [card1, card2] = this.flippedCards;
+                if (card1.dataset.icon === card2.dataset.icon) {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    this.matchedPairs++;
+                    this.flippedCards = [];
+                    const gridSize = this.container.querySelector('#gridSize').value;
+                    const [rows, cols] = gridSize.split('x').map(Number);
+                    if (this.matchedPairs === (rows * cols) / 2) {
+                        setTimeout(() => this.showWinScreen(), 500);
+                    }
+                } else {
+                    setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card1.textContent = '';
+                        card2.classList.remove('flipped');
+                        card2.textContent = '';
+                        this.flippedCards = [];
+                    }, 1000);
+                }
+            }
+
+            showWinScreen() {
+                this.container.querySelector('.game-screen').classList.add('hidden');
+                this.container.querySelector('.score-overlay').classList.remove('hidden');
+                triggerConfetti();
+            }
+        }
+        
+        class SnakeGame extends Game {
+            constructor(container, manifestEntry) {
+                super(container, manifestEntry);
+                this.gameLoop = this.gameLoop.bind(this);
+                this.handleKeyPress = this.handleKeyPress.bind(this);
+            }
+            
+            destroy() {
+                super.destroy();
+                document.removeEventListener('keydown', this.handleKeyPress);
+            }
+
+            render() {
+                this.container.innerHTML = `
+                    <div class="game-container snake-game">
+                        <div class="intro-panel">
+                            <h2>Snake</h2>
+                            <p>Use the arrow keys or swipe to control the snake.</p>
+                            <div class="settings">
+                                <div class="setting"><label for="speed">Speed:</label><select id="speed"><option value="slow">Slow</option><option value="normal" selected>Normal</option><option value="fast">Fast</option></select></div>
+                                <div class="setting"><label for="gridSize">Grid Size:</label><select id="gridSize"><option value="10x10">10x10</option><option value="15x15" selected>15x15</option><option value="20x20">20x20</option></select></div>
+                            </div>
+                            <button class="primary-button start-button">Start</button>
+                        </div>
+                        <div class="game-screen hidden"><canvas id="game-canvas" width="400" height="400" style="background-color: var(--bg-dark); border-radius: 8px;"></canvas></div>
+                        <div class="score-overlay hidden">
+                            <h2>Game Over</h2>
+                            <p>Your score: <span class="final-score"></span></p>
+                            <div class="actions"><button class="primary-button replay-button">Replay</button></div>
+                        </div>
+                    </div>
+                `;
+                this.bindEvents();
+                this.container.querySelector('.score-overlay .actions').appendChild(this.createBackButton());
+            }
+
+            bindEvents() {
+                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
+                this.container.querySelector('.replay-button').addEventListener('click', () => this.render());
+                document.addEventListener('keydown', this.handleKeyPress);
+            }
+            
+            handleKeyPress(e) {
+                const goingUp = this.direction === 'up';
+                const goingDown = this.direction === 'down';
+                const goingRight = this.direction === 'right';
+                const goingLeft = this.direction === 'left';
+
+                if (e.key === 'ArrowUp' && !goingDown) this.direction = 'up';
+                if (e.key === 'ArrowDown' && !goingUp) this.direction = 'down';
+                if (e.key === 'ArrowLeft' && !goingRight) this.direction = 'left';
+                if (e.key === 'ArrowRight' && !goingLeft) this.direction = 'right';
+            }
+
+            startGame() {
+                this.container.querySelector('.intro-panel').classList.add('hidden');
+                this.container.querySelector('.game-screen').classList.remove('hidden');
+
+                this.canvas = this.container.querySelector('#game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                const gridSizeVal = this.container.querySelector('#gridSize').value;
+                this.gridSize = parseInt(gridSizeVal.split('x')[0], 10);
+                this.tileSize = this.canvas.width / this.gridSize;
+
+                const startPos = Math.floor(this.gridSize / 2);
+                this.snake = [{ x: startPos, y: startPos }];
+                this.food = {};
+                this.direction = 'right';
+                this.score = 0;
+                this.gameOver = false;
+
+                this.generateFood();
+                this.gameLoop();
+            }
+
+            gameLoop() {
+                if (this.gameOver) {
+                    this.showGameOverScreen();
+                    return;
+                }
+
+                this.update();
+                this.draw();
+
+                const speed = this.container.querySelector('#speed').value;
+                let timeout = 150;
+                if (speed === 'slow') timeout = 250;
+                if (speed === 'fast') timeout = 80;
+
+                this.timerInterval = setTimeout(this.gameLoop, timeout);
+            }
+
+            update() {
+                const head = { x: this.snake[0].x, y: this.snake[0].y };
+
+                switch (this.direction) {
+                    case 'up': head.y--; break;
+                    case 'down': head.y++; break;
+                    case 'left': head.x--; break;
+                    case 'right': head.x++; break;
+                }
+
+                if (this.isCollision(head)) {
+                    this.gameOver = true;
+                    return;
+                }
+
+                this.snake.unshift(head);
+
+                if (head.x === this.food.x && head.y === this.food.y) {
+                    this.score++;
+                    this.generateFood();
+                } else {
+                    this.snake.pop();
+                }
+            }
+
+            isCollision(head) {
+                if (head.x < 0 || head.x >= this.gridSize || head.y < 0 || head.y >= this.gridSize) return true;
+                for (let i = 1; i < this.snake.length; i++) {
+                    if (head.x === this.snake[i].x && head.y === this.snake[i].y) return true;
+                }
+                return false;
+            }
+
+            generateFood() {
+                this.food.x = Math.floor(Math.random() * this.gridSize);
+                this.food.y = Math.floor(Math.random() * this.gridSize);
+                 // Avoid spawning food on snake
+                if (this.snake.some(segment => segment.x === this.food.x && segment.y === this.food.y)) {
+                    this.generateFood();
+                }
+            }
+
+            draw() {
+                this.ctx.fillStyle = '#1a202c';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.ctx.fillStyle = '#e53e3e';
+                this.ctx.fillRect(this.food.x * this.tileSize, this.food.y * this.tileSize, this.tileSize, this.tileSize);
+
+                this.ctx.fillStyle = '#38a169';
+                this.snake.forEach(segment => {
+                    this.ctx.fillRect(segment.x * this.tileSize, segment.y * this.tileSize, this.tileSize, this.tileSize);
+                });
+            }
+
+            showGameOverScreen() {
+                this.container.querySelector('.game-screen').classList.add('hidden');
+                this.container.querySelector('.score-overlay').classList.remove('hidden');
+                this.container.querySelector('.final-score').textContent = this.score;
+            }
+        }
+        
+        class TapFrenzyGame extends Game {
+             constructor(container, manifestEntry) {
+                super(container, manifestEntry);
+                this.score = 0;
+                this.targetTimeout = null;
+            }
+
+            render() {
+                this.container.innerHTML = `
+                    <div class="game-container tap-frenzy-game">
+                        <div class="intro-panel">
+                            <h2>Tap Frenzy</h2>
+                            <p>Tap the targets as they appear!</p>
+                            <div class="settings">
+                                <div class="setting"><label for="duration">Duration:</label><select id="duration"><option value="15">15s</option><option value="30" selected>30s</option><option value="60">60s</option></select></div>
+                                <div class="setting"><label for="difficulty">Difficulty:</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
+                            </div>
+                            <button class="primary-button start-button">Start</button>
+                        </div>
+                        <div class="game-screen hidden">
+                            <div class="timer" style="position: absolute; top: 20px; right: 20px; font-size: 2rem;"></div>
+                            <div class="game-area" style="position: relative; width: 90vw; height: 80vh;"></div>
+                        </div>
+                        <div class="score-overlay hidden">
+                            <h2>Game Over</h2>
+                            <p>Your score: <span class="final-score"></span></p>
+                            <div class="actions"><button class="primary-button replay-button">Replay</button></div>
+                        </div>
+                    </div>
+                `;
+                this.bindEvents();
+                 this.container.querySelector('.score-overlay .actions').appendChild(this.createBackButton());
+            }
+
+            bindEvents() {
+                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
+                this.container.querySelector('.replay-button').addEventListener('click', () => this.render());
+            }
+
+            startGame() {
+                this.container.querySelector('.intro-panel').classList.add('hidden');
+                this.container.querySelector('.game-screen').classList.remove('hidden');
+                this.score = 0;
+
+                const duration = parseInt(this.container.querySelector('#duration').value, 10);
+                this.startTimer(duration);
+                this.spawnTarget();
+            }
+
+            startTimer(duration) {
+                let timeLeft = duration;
+                const timerElement = this.container.querySelector('.timer');
+                 const updateTimer = () => {
+                    timerElement.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        this.endGame();
+                    } else {
+                        timeLeft--;
+                    }
+                };
+                updateTimer();
+                this.timerInterval = setInterval(updateTimer, 1000);
+            }
+
+            spawnTarget() {
+                if(this.gameOver) return;
+                const gameArea = this.container.querySelector('.game-area');
+                const target = document.createElement('div');
+                target.className = 'target';
+                target.style.top = `${Math.random() * 90}%`;
+                target.style.left = `${Math.random() * 90}%`;
+                
+                target.addEventListener('click', () => {
+                    this.score++;
+                    target.remove();
+                    clearTimeout(this.targetTimeout);
+                    this.spawnTarget();
+                });
+                
+                gameArea.innerHTML = ''; // Clear previous target
+                gameArea.appendChild(target);
+
+                const difficulty = this.container.querySelector('#difficulty').value;
+                let timeout = 2000;
+                if (difficulty === 'normal') timeout = 1200;
+                if (difficulty === 'hard') timeout = 700;
+
+                this.targetTimeout = setTimeout(() => {
+                    if(!this.gameOver) {
+                        target.remove();
+                        this.spawnTarget();
+                    }
+                }, timeout);
+            }
+
+            endGame() {
+                this.gameOver = true;
+                clearInterval(this.timerInterval);
+                clearTimeout(this.targetTimeout);
+                this.container.querySelector('.game-screen').classList.add('hidden');
+                this.container.querySelector('.score-overlay').classList.remove('hidden');
+                this.container.querySelector('.final-score').textContent = this.score;
+            }
+        }
+        
+        class SpinWheelGame extends Game {
+            constructor(container, manifestEntry) {
+                super(container, manifestEntry);
+                this.segments = [];
+            }
+            
+            render() {
+                this.container.innerHTML = `
+                    <div class="game-container spin-wheel-game">
+                        <div class="intro-panel">
+                            <h2>Spin The Wheel</h2>
+                            <p>Add your options and spin the wheel!</p>
+                            <div class="settings">
+                                <div class="setting" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                                    <label for="segments">Segments (comma-separated):</label>
+                                    <input type="text" id="segments" value="Option 1, Option 2, Option 3, Option 4, Option 5, Option 6" style="width: 100%;">
+                                </div>
+                            </div>
+                            <button class="primary-button start-button">Create Wheel</button>
+                        </div>
+                        <div class="game-screen hidden">
+                             <div class="wheel-container" style="position: relative; margin-bottom: 20px;">
+                                <canvas id="wheel-canvas" width="400" height="400"></canvas>
+                                <div class="wheel-pointer" style="position: absolute; top: -10px; left: 190px; width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 20px solid var(--gb-accent-2);"></div>
+                            </div>
+                            <button class="primary-button spin-button">Spin</button>
+                        </div>
+                        <div class="result-overlay hidden">
+                            <h2>The result is...</h2>
+                            <p class="result-text" style="font-size: 2rem; color: var(--gb-accent-2);"></p>
+                            <div class="actions">
+                                <button class="primary-button replay-button">Spin Again</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                this.bindEvents();
+                this.container.querySelector('.result-overlay .actions').appendChild(this.createBackButton());
+            }
+
+            bindEvents() {
+                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
+                this.container.querySelector('.spin-button').addEventListener('click', () => this.spin());
+                this.container.querySelector('.replay-button').addEventListener('click', () => {
+                    this.container.querySelector('.result-overlay').classList.add('hidden');
+                    this.spin();
+                });
+            }
+
+            startGame() {
+                this.container.querySelector('.intro-panel').classList.add('hidden');
+                this.container.querySelector('.game-screen').classList.remove('hidden');
+                this.canvas = this.container.querySelector('#wheel-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.drawWheel();
+            }
+            
+            drawWheel() {
+                const segmentsInput = this.container.querySelector('#segments');
+                this.segments = segmentsInput.value.split(',').map(s => s.trim()).filter(s => s);
+                if(this.segments.length === 0) {
+                    alert("Please enter at least one segment.");
+                    this.segments = ["Default"];
+                }
+                const numSegments = this.segments.length;
+                const anglePerSegment = (2 * Math.PI) / numSegments;
+                const colors = ['#e53e3e', '#3182ce', '#38a169', '#d69e2e', '#805ad5', '#dd6b20'];
+                
+                this.ctx.clearRect(0, 0, 400, 400);
+                this.ctx.font = '16px Poppins';
+
+                for (let i = 0; i < numSegments; i++) {
+                    const angle = i * anglePerSegment;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(200, 200);
+                    this.ctx.arc(200, 200, 200, angle, angle + anglePerSegment);
+                    this.ctx.closePath();
+                    this.ctx.fillStyle = colors[i % colors.length];
+                    this.ctx.fill();
+
+                    this.ctx.save();
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.translate(200, 200);
+                    this.ctx.rotate(angle + anglePerSegment / 2);
+                    this.ctx.textAlign = "right";
+                    this.ctx.fillText(this.segments[i], 180, 5);
+                    this.ctx.restore();
+                }
+            }
+            
+            spin() {
+                this.container.querySelector('.spin-button').disabled = true;
+                const startAngle = Math.random() * 2 * Math.PI;
+                const spinAngle = Math.random() * 10 + 10; 
+                const spinTime = Math.random() * 3000 + 4000;
+
+                this.canvas.style.transition = 'transform ' + spinTime + 'ms cubic-bezier(.17,.93,.38,1)';
+                this.canvas.style.transform = `rotate(${startAngle + spinAngle}rad)`;
+                
+                setTimeout(() => {
+                    const currentRotation = (startAngle + spinAngle) % (2 * Math.PI);
+                    const degrees = currentRotation * 180 / Math.PI;
+                    const arcd = 360 / this.segments.length;
+                    const index = Math.floor((360 - degrees % 360) / arcd);
+                    const result = this.segments[index];
+                    
+                    this.container.querySelector('.result-text').textContent = result;
+                    this.container.querySelector('.result-overlay').classList.remove('hidden');
+                    this.container.querySelector('.spin-button').disabled = false;
+                }, spinTime);
+            }
+        }
+        
+        class PictionaryGame extends Game {
+            constructor(container, manifestEntry) {
+                super(container, manifestEntry);
+                this.words = gameAssets.pictionary;
+                this.drawing = false;
+            }
+
+            render() {
+                 this.container.innerHTML = `
+                   <div class="game-container pictionary-game">
+                        <div class="intro-panel">
+                            <h2>Draw & Guess</h2>
+                            <p>Hand the phone to the drawer. They tap 'Reveal word' to start.</p>
+                            <div class="settings">
+                                <div class="setting"><label for="timePerTurn">Time per turn:</label><select id="timePerTurn"><option value="60">60s</option><option value="90" selected>90s</option><option value="120">120s</option></select></div>
+                                <div class="setting"><label for="brushSize">Brush size:</label><select id="brushSize"><option value="small">Small</option><option value="medium" selected>Medium</option><option value="large">Large</option></select></div>
+                                <div class="setting"><label for="wordCategory">Word Category:</label><select id="wordCategory"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
+                            </div>
+                            <button class="primary-button start-button">Start</button>
+                        </div>
+                        <div class="game-screen hidden">
+                            <div class="pass-screen"><h2>Pass the phone to the drawer</h2><button class="primary-button ready-button">Ready</button></div>
+                            <div class="reveal-screen hidden"><p style="margin-bottom: 20px;">Don't let others see!</p><button class="primary-button reveal-button">Reveal Word</button></div>
+                            <div class="draw-screen hidden">
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 500px; margin-bottom: 10px;">
+                                    <div class="timer"></div>
+                                    <div class="word" style="font-size: 1.5rem;"></div>
+                                </div>
+                                <canvas id="draw-canvas"></canvas>
+                                <div class="actions">
+                                    <button class="primary-button done-button">Done</button>
+                                    <button class="primary-button clear-button">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="score-overlay hidden">
+                            <h2>Turn Over!</h2>
+                            <p>Did your team guess it right?</p>
+                            <div class="actions"><button class="primary-button replay-button">New Turn</button></div>
+                        </div>
+                    </div>
+                `;
+                this.bindEvents();
+                this.container.querySelector('.score-overlay .actions').appendChild(this.createBackButton());
+            }
+
+            bindEvents() {
+                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
+                this.container.querySelector('.ready-button').addEventListener('click', () => this.showRevealScreen());
+                this.container.querySelector('.reveal-button').addEventListener('click', () => this.showDrawScreen());
+                this.container.querySelector('.done-button').addEventListener('click', () => this.endTurn());
+                this.container.querySelector('.clear-button').addEventListener('click', () => this.clearCanvas());
+                this.container.querySelector('.replay-button').addEventListener('click', () => this.render());
+            }
+
+            startGame() {
+                this.container.querySelector('.intro-panel').classList.add('hidden');
+                this.container.querySelector('.game-screen').classList.remove('hidden');
+            }
+
+            showRevealScreen() {
+                this.container.querySelector('.pass-screen').classList.add('hidden');
+                this.container.querySelector('.reveal-screen').classList.remove('hidden');
+            }
+
+            showDrawScreen() {
+                this.container.querySelector('.reveal-screen').classList.add('hidden');
+                this.container.querySelector('.draw-screen').classList.remove('hidden');
+                this.canvas = this.container.querySelector('#draw-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                const canvasSize = Math.min(window.innerWidth * 0.9, 500);
+                this.canvas.width = canvasSize;
+                this.canvas.height = canvasSize * 0.75;
+                
+                this.bindCanvasEvents();
+                this.startTurn();
+            }
+
+            bindCanvasEvents() {
+                const getPos = (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const clientX = e.clientX || e.touches[0].clientX;
+                    const clientY = e.clientY || e.touches[0].clientY;
+                    return { x: clientX - rect.left, y: clientY - rect.top };
+                };
+                
+                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(getPos(e)));
+                this.canvas.addEventListener('mouseup', () => this.stopDrawing());
+                this.canvas.addEventListener('mouseleave', () => this.stopDrawing());
+                this.canvas.addEventListener('mousemove', (e) => this.draw(getPos(e)));
+                
+                this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); this.startDrawing(getPos(e)); });
+                this.canvas.addEventListener('touchend', (e) => { e.preventDefault(); this.stopDrawing(); });
+                this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); this.draw(getPos(e)); });
+            }
+
+            startDrawing(pos) {
+                this.drawing = true;
+                this.ctx.beginPath();
+                this.ctx.moveTo(pos.x, pos.y);
+            }
+
+            stopDrawing() {
+                this.drawing = false;
+            }
+
+            draw(pos) {
+                if (!this.drawing) return;
+                const brushSize = this.container.querySelector('#brushSize').value;
+                let lineWidth = 5;
+                if (brushSize === 'small') lineWidth = 2;
+                if (brushSize === 'large') lineWidth = 10;
+
+                this.ctx.lineWidth = lineWidth;
+                this.ctx.lineCap = 'round';
+                this.ctx.strokeStyle = '#e6e6e6';
+
+                this.ctx.lineTo(pos.x, pos.y);
+                this.ctx.stroke();
+            }
+
+            clearCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+
+            startTurn() {
+                this.clearCanvas();
+                const wordCategory = this.container.querySelector('#wordCategory').value;
+                const word = this.getRandomWord(wordCategory);
+                this.container.querySelector('.word').textContent = word;
+
+                const timePerTurn = this.container.querySelector('#timePerTurn').value;
+                this.startTimer(timePerTurn);
+            }
+
+            startTimer(duration) {
+                let timeLeft = duration;
+                const timerElement = this.container.querySelector('.timer');
+                const updateTimer = () => {
+                    timerElement.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        this.endTurn();
+                    } else {
+                        timeLeft--;
+                    }
+                };
+                updateTimer();
+                this.timerInterval = setInterval(updateTimer, 1000);
+            }
+
+            endTurn() {
+                clearInterval(this.timerInterval);
+                this.showScoreScreen();
+            }
+
+            showScoreScreen() {
+                this.container.querySelector('.game-screen').classList.add('hidden');
+                this.container.querySelector('.score-overlay').classList.remove('hidden');
+            }
+
+            getRandomWord(category) {
+                const words = this.words[category];
+                return words[Math.floor(Math.random() * words.length)];
+            }
+        }
+
+        // --- app.js ---
+        const appState = {
+            manifest: [
+              { "id": "charades", "title": "Charades", "short": "Act it out. One phone. Many laughs.", "type": "party", "players": "2+", "complexity": 2 },
+              { "id": "quiz", "title": "Quiz Party", "short": "Quick group trivia rounds, single phone.", "type": "party", "players": "2+", "complexity": 3 },
+              { "id": "memory", "title": "Memory Match", "short": "Classic flip-and-match for solo or turns.", "type": "solo", "players": "1+", "complexity": 2 },
+              { "id": "snake", "title": "Snake", "short": "Single-player classic with swipe controls.", "type": "solo", "players": "1", "complexity": 3 },
+              { "id": "tap-frenzy", "title": "Tap Frenzy", "short": "Simple high-score tap game for turns.", "type": "solo", "players": "1+", "complexity": 2 },
+              { "id": "spin-wheel", "title": "Spin The Wheel", "short": "Randomly choose tasks or players.", "type": "party", "players": "2+", "complexity": 2 },
+              { "id": "pictionary", "title": "Draw & Guess", "short": "One draws on phone; group guesses.", "type": "party", "players": "2+", "complexity": 3 }
+            ],
+            gameInstances: {
+                charades: CharadesGame,
+                quiz: QuizGame,
+                memory: MemoryGame,
+                snake: SnakeGame,
+                'tap-frenzy': TapFrenzyGame,
+                'spin-wheel': SpinWheelGame,
+                pictionary: PictionaryGame
+            },
+            currentGame: null
+        };
+
+        function renderHub() {
+            const mainContainer = document.getElementById('gb-app');
+            mainContainer.classList.remove('page-exit-active');
+            mainContainer.classList.add('page-enter');
+            mainContainer.innerHTML = ''; 
+
+            const hubGrid = document.createElement('div');
+            hubGrid.className = 'hub-grid';
+
+            appState.manifest.forEach(game => {
+                const gameCard = createGameCard(game);
+                hubGrid.appendChild(gameCard);
+            });
+
+            mainContainer.appendChild(hubGrid);
+
+            hubGrid.addEventListener('click', (e) => {
+                const card = e.target.closest('.game-card');
+                if (card) {
+                    const gameId = card.dataset.gameId;
+                    navigate(`#/game/${gameId}`);
+                }
+            });
+            
+            setTimeout(() => {
+                mainContainer.classList.add('page-enter-active');
+            }, 10);
+        }
+
+        async function loadGame(gameId) {
+            if (appState.currentGame) {
+                appState.currentGame.destroy();
+                appState.currentGame = null;
+            }
+
+            const mainContainer = document.getElementById('gb-app');
+            mainContainer.classList.add('page-exit');
+            requestAnimationFrame(() => mainContainer.classList.add('page-exit-active'));
+
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            mainContainer.innerHTML = '';
+
+            const gameManifest = appState.manifest.find(g => g.id === gameId);
+            const GameClass = appState.gameInstances[gameId];
+
+            if (!gameManifest || !GameClass) {
+                console.error(`Game with id ${gameId} not found.`);
+                navigate('#/');
+                return;
+            }
+
+            appState.currentGame = new GameClass(mainContainer, gameManifest);
+            appState.currentGame.init();
+            
+            mainContainer.classList.remove('page-exit', 'page-exit-active');
+            mainContainer.classList.add('page-enter');
+            requestAnimationFrame(() => mainContainer.classList.add('page-enter-active'));
+        }
+
+        function initApp() {
+            initRouter();
+            addRoute('/', renderHub);
+            addRoute('/game', loadGame);
+
+            // Initial route handling
+            router();
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
