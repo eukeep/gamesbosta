@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>gamesbosta.fan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Game Hub</title>
     <style>
+        /* --- Google Font --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
         /* --- CSS Variables & Core Setup --- */
@@ -13,34 +14,27 @@
             --bg-medium: #2d3748;
             --bg-light: #4a5568;
             --text-light: #e2e8f0;
-            --text-dark: #1a202c;
-            --pawn1-color: #e53e3e; --pawn1-glow: #fed7d7;
-            --pawn2-color: #3182ce; --pawn2-glow: #bee3f8;
-            --pawn3-color: #38a169; --pawn3-glow: #c6f6d5;
-            --pawn4-color: #d69e2e; --pawn4-glow: #feebc8;
             --accent-color: #805ad5;
             --accent-hover: #9f7aea;
-            --card-size: clamp(50px, 15vmin, 100px);
-            --gap-size: 8px;
+            --accent-danger: #e53e3e;
+            --accent-success: #38a169;
+            --accent-warning: #d69e2e;
             --font-family: 'Poppins', sans-serif;
-            --gb-bg: #0f0f12;
-            --gb-surface: #111216;
-            --gb-accent: #ff4d6d;
-            --gb-accent-2: #ffd166;
-            --gb-card: rgba(255,255,255,0.03);
-            --gb-text: #e6e6e6;
         }
 
+        /* --- Base Body Styles --- */
         body {
             font-family: var(--font-family);
             background-color: var(--bg-dark);
             color: var(--text-light);
             margin: 0;
+            padding: 0;
             box-sizing: border-box;
             background: linear-gradient(315deg, #1a202c, #2d3748, #1a202c);
             background-size: 400% 400%;
             animation: gradient-bg 20s ease infinite;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         @keyframes gradient-bg {
@@ -51,36 +45,47 @@
 
         #gb-app {
             padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
+        /* --- Page Transition Simulation --- */
+        .page-enter { opacity: 0; transform: translateY(20px); }
+        .page-enter-active { opacity: 1; transform: translateY(0); transition: opacity 300ms ease-out, transform 300ms ease-out; }
+        .page-exit { opacity: 1; transform: translateY(0); }
+        .page-exit-active { opacity: 0; transform: translateY(-20px); transition: opacity 300ms ease-in, transform 300ms ease-in; }
+
+        /* --- Hub Grid & Cards --- */
         .hub-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
-            perspective: 1000px;
         }
 
         .game-card {
-            background-color: var(--gb-card);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 20px;
-            text-decoration: none;
-            color: var(--gb-text);
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
-            will-change: transform;
-            transform-style: preserve-3d;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
         }
 
         .game-card:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 20px 30px rgba(0,0,0,0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
         .game-card h3 {
             margin: 0 0 10px;
             font-size: 1.5rem;
-            color: var(--gb-accent);
+            color: var(--accent-warning);
+        }
+        
+        .game-card p {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            line-height: 1.4;
         }
 
         .game-card-tags {
@@ -91,70 +96,94 @@
         }
 
         .game-card-tags span {
-            background-color: var(--gb-surface);
+            background-color: var(--bg-medium);
             padding: 5px 10px;
             border-radius: 6px;
         }
 
-        .page-enter { opacity: 0; transform: translateY(20px); }
-        .page-enter-active { opacity: 1; transform: translateY(0); transition: opacity 300ms, transform 300ms; }
-        .page-exit { opacity: 1; transform: translateY(0); }
-        .page-exit-active { opacity: 0; transform: translateY(-20px); transition: opacity 300ms, transform 300ms; }
+        /* --- Generic Game UI Elements --- */
+        .hidden { display: none !important; }
 
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: calc(100vh - 40px);
+            text-align: center;
+        }
+        
+        .game-header { width: 100%; margin-bottom: 30px; }
+
+        .primary-button, .secondary-button {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.3s ease;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: var(--font-family);
+            margin: 5px;
+        }
+        .primary-button { background-color: var(--accent-color); color: var(--text-light); }
+        .primary-button:hover { background-color: var(--accent-hover); transform: scale(1.05); }
+        .primary-button.success { background-color: var(--accent-success); }
+        .primary-button.danger { background-color: var(--accent-danger); }
+        .secondary-button { background-color: var(--bg-light); color: var(--text-light); }
+        .secondary-button:hover { background-color: var(--bg-medium); }
+        .primary-button:disabled { background-color: var(--bg-light); cursor: not-allowed; opacity: 0.6; }
+
+        .intro-panel h2, .score-overlay h2, .result-overlay h2 { font-size: 2.5rem; color: var(--text-light); }
+        .intro-panel p { max-width: 400px; margin: 10px auto 20px; opacity: 0.9; }
+
+        .settings { margin: 20px 0; display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 320px; }
+        .setting { display: flex; justify-content: space-between; align-items: center; }
+        select, input[type="text"] { width: 120px; padding: 8px; border-radius: 5px; border: 1px solid var(--bg-light); background-color: var(--bg-medium); color: var(--text-light); font-family: var(--font-family); }
+        input[type="text"] { width: calc(100% - 16px); }
+
+        .timer { font-size: 2.5rem; margin-bottom: 20px; font-weight: 700; color: var(--accent-warning); }
+        .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; width: 100%; max-width: 450px;}
+        .actions { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
+        .word-display { font-size: clamp(2rem, 8vw, 3rem); margin: 20px; font-weight: 600; min-height: 80px; display: flex; align-items: center; justify-content: center; padding: 0 10px; }
+
+        /* --- Confetti Animation --- */
         .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
         .confetti { position: absolute; width: 10px; height: 10px; opacity: 0; animation: fall 5s linear forwards; }
-
         @keyframes fall {
             0% { transform: translateY(-10vh) rotateZ(0deg); opacity: 1; }
             100% { transform: translateY(110vh) rotateZ(720deg); opacity: 0; }
         }
         
-        .hidden { display: none !important; }
+        /* --- Specific Game Styles --- */
 
-        .primary-button {
-            background-color: var(--accent-color);
-            color: var(--text-light);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            font-size: 1rem;
-            font-weight: 600;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .primary-button:hover { background-color: var(--accent-hover); }
-        .primary-button:disabled { background-color: var(--bg-light); cursor: not-allowed; }
-
-        .game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; }
-        
-        .intro-panel h2, .score-overlay h2, .result-overlay h2 { font-size: 2.5rem; color: var(--gb-accent); }
-
-        .settings { margin: 20px 0; display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 320px; }
-        .setting { display: flex; justify-content: space-between; align-items: center; }
-        select, input { padding: 8px; border-radius: 5px; border: 1px solid var(--bg-light); background-color: var(--bg-medium); color: var(--text-light); font-family: 'Poppins', sans-serif; }
-
-        .timer { font-size: 2.5rem; margin-bottom: 20px; font-weight: 700; }
-        .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; width: 100%; max-width: 400px;}
-        .actions { margin-top: 20px; display: flex; gap: 15px; justify-content: center; }
-        
-        /* Memory Game Cards */
-        .game-board { display: grid; gap: 10px; }
-        .card { width: var(--card-size); height: var(--card-size); cursor: pointer; position: relative; transform-style: preserve-3d; transition: transform 0.6s; }
+        /* Memory Match Cards */
+        .game-board { display: grid; gap: 8px; }
+        .card { width: var(--card-size); height: var(--card-size); cursor: pointer; position: relative; perspective: 1000px; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
         .card-front { background-color: var(--bg-light); }
         .card-back { background-color: var(--accent-color); transform: rotateY(180deg); font-size: calc(var(--card-size) * 0.6); }
-        .card.flipped { transform: rotateY(180deg); }
-        .card.matched { opacity: 0.5; cursor: default; }
+        .card.matched { opacity: 0.3; pointer-events: none; }
 
         /* Tap Frenzy Target */
-        .target { width: 60px; height: 60px; background-color: var(--pawn1-color); border-radius: 50%; position: absolute; cursor: pointer; transition: transform 0.1s; }
+        .tap-frenzy-area { position: relative; width: 90vw; height: 70vh; max-width: 500px; background: var(--bg-medium); border-radius: 10px; overflow: hidden; }
+        .target { width: 60px; height: 60px; background-color: var(--accent-danger); border-radius: 50%; position: absolute; cursor: pointer; transition: transform 0.1s; box-shadow: 0 0 15px var(--accent-danger); }
         .target:active { transform: scale(0.9); }
-        
-        /* Pictionary Canvas */
-        #draw-canvas { border: 2px solid var(--text-light); background-color: var(--bg-medium); border-radius: 8px; }
 
+        /* Snake Game Canvas */
+        #snake-canvas { background-color: var(--bg-dark); border-radius: 8px; border: 2px solid var(--bg-light); }
+
+        /* Pictionary Canvas */
+        #pictionary-canvas { border: 2px solid var(--text-light); background-color: white; border-radius: 8px; cursor: crosshair; }
+        .pictionary-controls { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+        .pictionary-controls input[type="color"] { width: 40px; height: 40px; border: none; padding: 0; border-radius: 50%; overflow: hidden; cursor: pointer; background-color: transparent; }
+        .pictionary-controls input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .pictionary-controls input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+        .pictionary-controls .brush-size { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; display: flex; align-items: center; justify-content: center; }
+        .pictionary-controls .brush-size.active { border-color: var(--accent-warning); }
+        .pictionary-controls .brush-size div { background-color: var(--text-light); border-radius: 50%; }
     </style>
 </head>
 <body>
@@ -163,42 +192,38 @@
     <script type="module">
         // --- DATA STORE ---
         const gameAssets = {
-            "charades": {
-              "easy": ["Apple", "Banana", "Car", "Dog", "Cat", "House", "Ball", "Sun", "Moon", "Star", "Book", "Chair", "Phone", "Key", "Shoe", "Hat", "Guitar", "Pizza", "Tree"],
-              "normal": ["Computer", "Telescope", "Microphone", "Painting", "Singing", "Dancing", "Reading", "Writing", "Running", "Swimming", "Flying", "Gardening", "Fishing"],
-              "hard": ["Photosynthesis", "Onomatopoeia", "Serendipity", "Ephemeral", "Ubiquitous", "Mellifluous", "Petrichor", "Sonder", "Defenestration", "Pulchritudinous"]
+            charades: {
+              easy: ["Apple", "Banana", "Car", "Dog", "Cat", "House", "Ball", "Sun", "Moon", "Star", "Book", "Chair", "Phone", "Key", "Shoe", "Hat", "Guitar", "Pizza", "Tree", "Smile", "Cry", "Jump", "Sleep"],
+              normal: ["Computer", "Telescope", "Microphone", "Painting", "Singing", "Dancing", "Reading", "Writing", "Running", "Swimming", "Flying", "Gardening", "Fishing", "Photography", "Robot", "Superhero"],
+              hard: ["Photosynthesis", "Onomatopoeia", "Serendipity", "Ephemeral", "Ubiquitous", "Mellifluous", "Petrichor", "Sonder", "Defenestration", "Pulchritudinous", "Conspiracy Theory", "Stock Market"]
             },
-            "quiz": {
-              "general": [{"text": "What is the capital of France?", "choices": ["London", "Paris", "Berlin", "Madrid"], "correctIndex": 1}, {"text": "What is the largest planet in our solar system?", "choices": ["Mars", "Jupiter", "Saturn", "Earth"], "correctIndex": 1}, {"text": "What is 2 + 2?", "choices": ["3", "4", "5", "6"], "correctIndex": 1}, {"text": "Which ocean is the largest?", "choices": ["Atlantic", "Indian", "Arctic", "Pacific"], "correctIndex": 3}],
-              "movies": [{"text": "Who directed 'The Shawshank Redemption'?", "choices": ["Spielberg", "Tarantino", "Darabont", "Scorsese"], "correctIndex": 2}, {"text": "Which movie features the character 'Darth Vader'?", "choices": ["Star Trek", "The Matrix", "Star Wars", "Blade Runner"], "correctIndex": 2}],
-              "history": [{"text": "In what year did the Titanic sink?", "choices": ["1905", "1912", "1920", "1931"], "correctIndex": 1}, {"text": "Who was the first President of the United States?", "choices": ["Abraham Lincoln", "Thomas Jefferson", "John Adams", "George Washington"], "correctIndex": 3}]
+            quiz: {
+              general: [
+                  {text: "What is the capital of France?", choices: ["London", "Paris", "Berlin", "Madrid"], correctIndex: 1}, 
+                  {text: "What is the largest planet in our solar system?", choices: ["Mars", "Jupiter", "Saturn", "Earth"], correctIndex: 1}, 
+                  {text: "What element does 'O' represent on the periodic table?", choices: ["Oxygen", "Gold", "Osmium", "Oganesson"], correctIndex: 0}, 
+                  {text: "Which ocean is the largest?", choices: ["Atlantic", "Indian", "Arctic", "Pacific"], correctIndex: 3}
+              ],
+              movies: [
+                  {text: "Who directed 'Pulp Fiction'?", choices: ["Steven Spielberg", "Quentin Tarantino", "Martin Scorsese", "Christopher Nolan"], correctIndex: 1}, 
+                  {text: "Which movie won the first Best Animated Feature Oscar?", choices: ["Shrek", "Toy Story", "Monsters, Inc.", "Finding Nemo"], correctIndex: 0},
+                  {text: "What item links all the stories in 'Pulp Fiction'?", choices: ["A gold watch", "A mysterious briefcase", "A samurai sword", "A royale with cheese"], correctIndex: 1}
+              ],
+              history: [
+                  {text: "In what year did the Titanic sink?", choices: ["1905", "1912", "1920", "1931"], correctIndex: 1}, 
+                  {text: "Who was the first President of the United States?", choices: ["Abraham Lincoln", "Thomas Jefferson", "John Adams", "George Washington"], correctIndex: 3},
+                  {text: "Which empire did Genghis Khan found?", choices: ["Roman Empire", "Ottoman Empire", "Mongol Empire", "Persian Empire"], correctIndex: 2}
+              ]
             },
-            "pictionary": {
-              "easy": ["Circle", "House", "Star", "Heart", "Fish", "Snake", "Ladder", "Book", "Sun", "Happy Face", "Flower", "Boat"],
-              "normal": ["Bicycle", "Elephant", "Camera", "Birthday Cake", "Spider Web", "Helicopter", "Castle", "Popcorn", "Rainbow"],
-              "hard": ["Eiffel Tower", "Statue of Liberty", "Mona Lisa", "Sherlock Holmes", "Compass", "Solar System", "Can opener"]
+            pictionary: {
+              easy: ["Circle", "House", "Star", "Heart", "Fish", "Snake", "Ladder", "Book", "Sun", "Happy Face", "Flower", "Boat", "Tree", "Mountain"],
+              normal: ["Bicycle", "Elephant", "Camera", "Birthday Cake", "Spider Web", "Helicopter", "Castle", "Popcorn", "Rainbow", "Guitar", "Clock", "Bridge"],
+              hard: ["Eiffel Tower", "Statue of Liberty", "Mona Lisa", "Sherlock Holmes", "Compass", "Solar System", "DNA", "Submarine", "Pterodactyl"]
             },
-            "memory": [ "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦" ]
+            memoryIcons: [ "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦", "Steven Spielberg", "Quentin Tarantino" ]
         };
 
-        // --- UI / components.js ---
-        function createGameCard(game) {
-            const card = document.createElement('div');
-            card.className = 'game-card';
-            card.dataset.gameId = game.id;
-            card.innerHTML = `
-                <div class="game-card-content">
-                    <h3>${game.title}</h3>
-                    <p>${game.short}</p>
-                    <div class="game-card-tags">
-                        <span>${game.players}</span>
-                        <span>${'★'.repeat(game.complexity)}${'☆'.repeat(5 - game.complexity)}</span>
-                    </div>
-                </div>
-            `;
-            return card;
-        }
-
+        // --- UI / Confetti Utility ---
         function triggerConfetti() {
             const container = document.createElement('div');
             container.className = 'confetti-container';
@@ -214,296 +239,308 @@
             setTimeout(() => container.remove(), 5000);
         }
 
-        // --- router.js (Simplified - NO EXTERNAL ROUTING) ---
-        let currentView = 'hub';
-        let currentGameInstance = null;
-        const appContainer = document.getElementById('gb-app');
-
-        function navigateTo(gameId) {
-            currentView = gameId ? 'game' : 'hub';
-            renderView();
-        }
-
-        // --- games/base.js ---
+        // --- Game Base Class ---
         class Game {
-            constructor(container, manifestEntry) {
+            constructor(container) {
                 this.container = container;
-                this.manifestEntry = manifestEntry;
-                this.settings = {};
                 this.timerInterval = null;
+                this.words = [];
+                this.wordPool = [];
+                this.score = 0;
             }
-            init(settings) { this.settings = settings; this.render(); }
+
+            init() {
+                this.render();
+            }
+
             destroy() {
                 clearInterval(this.timerInterval);
                 this.container.innerHTML = '';
             }
-            createBackButton() {
-                const button = document.createElement('button');
-                button.textContent = 'Back to Hub';
-                button.className = 'primary-button back-to-hub-button';
-                button.onclick = () => navigateTo(null); // Go back to hub
-                return button;
+
+            // --- Common UI Components ---
+            createHeader(title) {
+                const header = document.createElement('div');
+                header.className = 'game-header';
+                const backButton = document.createElement('button');
+                backButton.className = 'secondary-button';
+                backButton.textContent = '← Back to Hub';
+                backButton.onclick = () => renderHub();
+                header.appendChild(backButton);
+                return header;
             }
-            render() { /* To be implemented by child classes */ }
+
+            createIntroPanel(title, description, settingsHtml, startCallback) {
+                const panel = document.createElement('div');
+                panel.className = 'intro-panel';
+                panel.innerHTML = `<h2>${title}</h2><p>${description}</p><div class="settings">${settingsHtml}</div>`;
+                const startButton = document.createElement('button');
+                startButton.className = 'primary-button';
+                startButton.textContent = 'Start Game';
+                startButton.onclick = startCallback;
+                panel.appendChild(startButton);
+                return panel;
+            }
+
+            createScoreScreen(scoreText, replayCallback) {
+                const overlay = document.createElement('div');
+                overlay.className = 'score-overlay';
+                overlay.innerHTML = `<h2>Game Over</h2><div class="scores" style="font-size: 1.5rem; margin: 20px 0;">${scoreText}</div>`;
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+                const replayButton = document.createElement('button');
+                replayButton.className = 'primary-button';
+                replayButton.textContent = 'Play Again';
+                replayButton.onclick = replayCallback;
+                actions.appendChild(replayButton);
+                actions.appendChild(this.createHeader().firstElementChild); // Re-use back button logic
+                overlay.appendChild(actions);
+                return overlay;
+            }
+
+            // --- Timer Logic ---
+            startTimer(duration, timerElement, onEndCallback) {
+                let timeLeft = duration;
+                const updateTimer = () => {
+                    if (timeLeft < 0) {
+                        clearInterval(this.timerInterval);
+                        onEndCallback();
+                    } else {
+                        timerElement.textContent = timeLeft;
+                        timeLeft--;
+                    }
+                };
+                updateTimer();
+                this.timerInterval = setInterval(updateTimer, 1000);
+            }
+
+            // --- Word Management ---
+            loadWordPool(categoryKey) {
+                const category = document.getElementById(categoryKey).value;
+                this.wordPool = [...(this.words[category] || [])];
+                this.shuffleArray(this.wordPool);
+            }
+            
+            getNextWord() {
+                if (this.wordPool.length === 0) {
+                    this.loadWordPool('difficulty'); // Reload pool if empty
+                    if (this.wordPool.length === 0) return "Out of Words"; // Safety check
+                }
+                return this.wordPool.pop();
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
         }
-        
-        // --- All Game Classes ---
+
+        // --- Game Implementations ---
+
+        // 1. Charades Game
         class CharadesGame extends Game {
-            constructor(container, manifestEntry) {
-                super(container, manifestEntry);
+            constructor(container) {
+                super(container);
                 this.words = gameAssets.charades;
                 this.score = { correct: 0, skipped: 0 };
             }
 
             render() {
-                this.container.innerHTML = `
-                    <div class="game-container charades-game">
-                        <div class="intro-panel">
-                            <h2>Charades</h2>
-                            <p>Tap 'Ready' -> hand phone to actor -> Actor taps 'Reveal' to see their secret word, then the timer starts!</p>
-                            <div class="settings">
-                                <div class="setting"><label for="timePerTurn">Time per turn:</label><select id="timePerTurn"><option value="30">30s</option><option value="60" selected>60s</option><option value="90">90s</option></select></div>
-                                <div class="setting"><label for="difficulty">Difficulty:</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
-                            </div>
-                            <button class="primary-button start-button">Start Game</button>
-                        </div>
-                        <div class="game-screen hidden">
-                            <div class="pass-screen"><h2>Pass to the Actor</h2><button class="primary-button ready-button">Ready</button></div>
-                            <div class="reveal-screen hidden"><p>Keep the word secret!</p><button class="primary-button reveal-button">Reveal Word</button></div>
-                            <div class="word-screen hidden"><div class="timer"></div><div class="word" style="font-size: 2.5rem; margin: 20px; font-weight: 600;"></div><div class="actions"><button class="primary-button correct-button">Correct</button><button class="primary-button skip-button">Skip</button></div></div>
-                        </div>
-                        <div class="score-overlay hidden">
-                            <h2>Turn Over!</h2>
-                            <div class="scores" style="font-size: 1.5rem;"></div><div class="actions"><button class="primary-button replay-button">Play Again</button></div>
-                        </div>
-                    </div>
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const settingsHtml = `
+                    <div class="setting"><label for="timePerTurn">Time per turn:</label><select id="timePerTurn"><option value="60" selected>60s</option><option value="90">90s</option><option value="120">120s</option></select></div>
+                    <div class="setting"><label for="difficulty">Difficulty:</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
                 `;
-                this.bindEvents();
-                this.container.querySelector('.score-overlay .actions').appendChild(this.createBackButton());
+                const intro = this.createIntroPanel("Charades", "Act out the word on screen for your team to guess. Get as many right as you can before time runs out!", settingsHtml, () => this.showPassScreen());
+                this.container.appendChild(intro);
             }
 
-            bindEvents() {
-                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
-                this.container.querySelector('.ready-button').addEventListener('click', () => this.showRevealScreen());
-                this.container.querySelector('.reveal-button').addEventListener('click', () => this.showWordScreen());
-                this.container.querySelector('.correct-button').addEventListener('click', () => this.nextWord(true));
-                this.container.querySelector('.skip-button').addEventListener('click', () => this.nextWord(false));
-                this.container.querySelector('.replay-button').addEventListener('click', () => this.render());
+            showPassScreen() {
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const passScreen = document.createElement('div');
+                passScreen.innerHTML = `<p style="font-size: 1.5rem; margin: 40px 0;">Pass the phone to the actor.</p>`;
+                const readyButton = document.createElement('button');
+                readyButton.className = 'primary-button';
+                readyButton.textContent = 'Ready to Start';
+                readyButton.onclick = () => this.runGame();
+                passScreen.appendChild(readyButton);
+                this.container.appendChild(passScreen);
             }
 
-            startGame() {
-                this.container.querySelector('.intro-panel').classList.add('hidden');
-                this.container.querySelector('.game-screen .pass-screen').classList.remove('hidden');
+            runGame() {
                 this.score = { correct: 0, skipped: 0 };
-            }
+                this.loadWordPool('difficulty');
+                this.container.innerHTML = ''; // Clear screen
 
-            showRevealScreen() {
-                this.container.querySelector('.pass-screen').classList.add('hidden');
-                this.container.querySelector('.reveal-screen').classList.remove('hidden');
-            }
+                const wordDisplay = document.createElement('div');
+                wordDisplay.className = 'word-display';
+                const timerDisplay = document.createElement('div');
+                timerDisplay.className = 'timer';
 
-            showWordScreen() {
-                this.container.querySelector('.reveal-screen').classList.add('hidden');
-                this.container.querySelector('.word-screen').classList.remove('hidden');
-                this.startTurn();
-            }
-
-            startTurn() {
-                this.nextWord(null); 
-                const timePerTurn = parseInt(this.container.querySelector('#timePerTurn').value, 10);
-                this.startTimer(timePerTurn);
-            }
-
-            startTimer(duration) {
-                let timeLeft = duration;
-                const timerElement = this.container.querySelector('.timer');
-                const updateTimer = () => {
-                    timerElement.textContent = timeLeft;
-                    if (timeLeft <= 0) this.endTurn();
-                    else timeLeft--;
-                };
-                updateTimer();
-                this.timerInterval = setInterval(updateTimer, 1000);
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+                const correctButton = document.createElement('button');
+                correctButton.className = 'primary-button success';
+                correctButton.textContent = 'Correct';
+                correctButton.onclick = () => this.nextWord(true);
+                const skipButton = document.createElement('button');
+                skipButton.className = 'primary-button danger';
+                skipButton.textContent = 'Skip';
+                skipButton.onclick = () => this.nextWord(false);
+                actions.append(skipButton, correctButton);
+                
+                this.container.append(timerDisplay, wordDisplay, actions);
+                
+                this.nextWord(null); // Load first word
+                const timePerTurn = parseInt(document.getElementById('timePerTurn').value, 10);
+                this.startTimer(timePerTurn, timerDisplay, () => this.endGame());
             }
             
             nextWord(isCorrect) {
                  if (isCorrect === true) this.score.correct++;
                  else if (isCorrect === false) this.score.skipped++;
-                const difficulty = this.container.querySelector('#difficulty').value;
-                const wordList = this.words[difficulty] || [];
-                const word = wordList[Math.floor(Math.random() * wordList.length)];
-                this.container.querySelector('.word').textContent = word;
+                 this.container.querySelector('.word-display').textContent = this.getNextWord();
             }
 
-            endTurn() {
-                clearInterval(this.timerInterval);
-                this.showScoreScreen();
-            }
-
-            showScoreScreen() {
-                this.container.querySelector('.game-screen').classList.add('hidden');
-                this.container.querySelector('.word-screen').classList.add('hidden');
-                this.container.querySelector('.score-overlay').classList.remove('hidden');
-                this.container.querySelector('.scores').innerHTML = `Correct: ${this.score.correct}<br>Skipped: ${this.score.skipped}`;
+            endGame() {
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const scoreText = `Correct: ${this.score.correct}<br>Skipped: ${this.score.skipped}`;
+                const scoreScreen = this.createScoreScreen(scoreText, () => this.render());
+                this.container.appendChild(scoreScreen);
             }
         }
 
+        // 2. Quiz Party Game
         class QuizGame extends Game {
-            constructor(container, manifestEntry) {
-                super(container, manifestEntry);
+            constructor(container) {
+                super(container);
                 this.questions = gameAssets.quiz;
                 this.currentQuestionIndex = 0;
-                this.score = 0;
             }
 
             render() {
-                this.container.innerHTML = `
-                    <div class="game-container quiz-game">
-                        <div class="intro-panel">
-                            <h2>Quiz Party</h2><p>Choose your settings and start the quiz!</p>
-                            <div class="settings">
-                                <div class="setting"><label for="numberOfQuestions">Questions:</label><select id="numberOfQuestions"><option value="3">3</option><option value="5" selected>5</option><option value="10">10</option></select></div>
-                                <div class="setting"><label for="timePerQuestion">Time/Question:</label><select id="timePerQuestion"><option value="10">10s</option><option value="20" selected>20s</option><option value="30">30s</option></select></div>
-                                <div class="setting"><label for="category">Category:</label><select id="category"><option value="general" selected>General</option><option value="movies">Movies</option><option value="history">History</option></select></div>
-                            </div><button class="primary-button start-button">Start</button>
-                        </div>
-                        <div class="game-screen hidden">
-                            <div class="timer"></div><div class="question" style="font-size: 1.5rem; margin-bottom: 20px;"></div><div class="choices"></div>
-                        </div>
-                        <div class="score-overlay hidden">
-                            <h2>Final Score</h2><div class="scores" style="font-size: 1.5rem;"></div><div class="actions"><button class="primary-button replay-button">Replay</button></div>
-                        </div>
-                    </div>
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const settingsHtml = `
+                    <div class="setting"><label for="numberOfQuestions">Questions:</label><select id="numberOfQuestions"><option value="3">3</option><option value="5" selected>5</option></select></div>
+                    <div class="setting"><label for="category">Category:</label><select id="category"><option value="general" selected>General</option><option value="movies">Movies</option><option value="history">History</option></select></div>
                 `;
-                this.bindEvents();
-                this.container.querySelector('.score-overlay .actions').appendChild(this.createBackButton());
-            }
-
-            bindEvents() {
-                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
-                this.container.querySelector('.replay-button').addEventListener('click', () => this.render());
+                const intro = this.createIntroPanel("Quiz Party", "Answer the questions as quickly as possible. Good luck!", settingsHtml, () => this.startGame());
+                this.container.appendChild(intro);
             }
 
             startGame() {
-                this.container.querySelector('.intro-panel').classList.add('hidden');
-                this.container.querySelector('.game-screen').classList.remove('hidden');
-                this.currentQuestionIndex = 0;
                 this.score = 0;
+                this.currentQuestionIndex = 0;
+                const category = document.getElementById('category').value;
+                this.questionPool = [...(this.questions[category] || [])];
+                this.shuffleArray(this.questionPool);
                 this.showNextQuestion();
             }
 
             showNextQuestion() {
-                clearInterval(this.timerInterval);
-                const category = this.container.querySelector('#category').value;
-                let questions = this.questions[category] || [];
-                // Simple shuffle to not ask the same questions every time
-                questions = [...questions].sort(() => Math.random() - 0.5);
-                const numberOfQuestions = parseInt(this.container.querySelector('#numberOfQuestions').value, 10);
-
-                if (this.currentQuestionIndex >= numberOfQuestions || this.currentQuestionIndex >= questions.length) {
-                    this.showScoreScreen();
+                const numberOfQuestions = parseInt(document.getElementById('numberOfQuestions').value, 10);
+                if (this.currentQuestionIndex >= numberOfQuestions || this.currentQuestionIndex >= this.questionPool.length) {
+                    this.endGame();
                     return;
                 }
 
-                const question = questions[this.currentQuestionIndex];
-                this.container.querySelector('.question').textContent = question.text;
-                const choicesContainer = this.container.querySelector('.choices');
-                choicesContainer.innerHTML = '';
+                const question = this.questionPool[this.currentQuestionIndex];
+                this.container.innerHTML = ''; // Clear screen
+
+                const progress = document.createElement('p');
+                progress.textContent = `Question ${this.currentQuestionIndex + 1} of ${numberOfQuestions}`;
+                const questionText = document.createElement('h3');
+                questionText.style.fontSize = "1.5rem";
+                questionText.style.margin = "20px";
+                questionText.textContent = question.text;
+                const choicesContainer = document.createElement('div');
+                choicesContainer.className = 'choices';
+
                 question.choices.forEach((choice, index) => {
                     const choiceButton = document.createElement('button');
                     choiceButton.className = 'primary-button';
                     choiceButton.textContent = choice;
-                    choiceButton.addEventListener('click', () => this.checkAnswer(index === question.correctIndex));
+                    choiceButton.onclick = () => this.checkAnswer(index === question.correctIndex, choicesContainer);
                     choicesContainer.appendChild(choiceButton);
                 });
-
-                const timePerQuestion = parseInt(this.container.querySelector('#timePerQuestion').value, 10);
-                this.startTimer(timePerQuestion);
-            }
-
-            startTimer(duration) {
-                let timeLeft = duration;
-                const timerElement = this.container.querySelector('.timer');
-                const updateTimer = () => {
-                    timerElement.textContent = timeLeft;
-                    if (timeLeft < 0) this.checkAnswer(false);
-                    else timeLeft--;
-                };
-                updateTimer();
-                this.timerInterval = setInterval(updateTimer, 1000);
-            }
-
-            checkAnswer(isCorrect) {
-                if (isCorrect) this.score += 10;
+                
+                this.container.append(progress, questionText, choicesContainer);
                 this.currentQuestionIndex++;
-                this.showNextQuestion();
             }
 
-            showScoreScreen() {
-                clearInterval(this.timerInterval);
-                this.container.querySelector('.game-screen').classList.add('hidden');
-                this.container.querySelector('.score-overlay').classList.remove('hidden');
-                this.container.querySelector('.scores').textContent = `Your score: ${this.score}`;
+            checkAnswer(isCorrect, choicesContainer) {
+                // Disable buttons after selection
+                Array.from(choicesContainer.children).forEach(button => button.disabled = true);
+                
+                if (isCorrect) {
+                    this.score++;
+                    // Highlight correct answer (optional visual feedback)
+                }
+                setTimeout(() => this.showNextQuestion(), 1000); // Pause before next question
+            }
+
+            endGame() {
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const scoreText = `Your score: ${this.score} / ${document.getElementById('numberOfQuestions').value}`;
+                const scoreScreen = this.createScoreScreen(scoreText, () => this.render());
+                this.container.appendChild(scoreScreen);
             }
         }
         
+        // 3. Memory Match Game
         class MemoryGame extends Game {
-            constructor(container, manifestEntry) {
-                super(container, manifestEntry);
-                this.icons = gameAssets.memory;
+            constructor(container) {
+                super(container);
+                this.icons = gameAssets.memoryIcons;
                 this.flippedCards = [];
                 this.matchedPairs = 0;
             }
 
             render() {
-                this.container.innerHTML = `
-                   <div class="game-container memory-game">
-                        <div class="intro-panel">
-                            <h2>Memory Match</h2><p>Flip cards to find matching pairs!</p>
-                            <div class="settings">
-                                <div class="setting"><label for="gridSize">Grid size:</label><select id="gridSize"><option value="2x4">2x4</option><option value="4x4" selected>4x4</option><option value="4x6">4x6</option></select></div>
-                            </div><button class="primary-button start-button">Start</button>
-                        </div>
-                        <div class="game-screen hidden"><div class="game-board"></div></div>
-                        <div class="score-overlay hidden">
-                            <h2>You Won!</h2><div class="actions"><button class="primary-button replay-button">Replay</button></div>
-                        </div>
-                    </div>
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const settingsHtml = `
+                    <div class="setting"><label for="gridSize">Grid size:</label><select id="gridSize"><option value="2x4">Small (2x4)</option><option value="4x4" selected>Medium (4x4)</option><option value="4x6">Large (4x6)</option></select></div>
                 `;
-                this.bindEvents();
-                this.container.querySelector('.score-overlay .actions').appendChild(this.createBackButton());
-            }
-
-            bindEvents() {
-                this.container.querySelector('.start-button').addEventListener('click', () => this.startGame());
-                this.container.querySelector('.replay-button').addEventListener('click', () => this.render());
+                const intro = this.createIntroPanel("Memory Match", "Flip cards to find matching pairs!", settingsHtml, () => this.startGame());
+                this.container.appendChild(intro);
             }
 
             startGame() {
-                this.container.querySelector('.intro-panel').classList.add('hidden');
-                this.container.querySelector('.game-screen').classList.remove('hidden');
                 this.flippedCards = [];
                 this.matchedPairs = 0;
-                this.renderBoard();
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                
+                const board = document.createElement('div');
+                board.className = 'game-board';
+                this.container.appendChild(board);
+                
+                this.renderBoard(board);
             }
 
-            renderBoard() {
-                const board = this.container.querySelector('.game-board');
-                const gridSize = this.container.querySelector('#gridSize').value;
+            renderBoard(board) {
+                const gridSize = document.getElementById('gridSize').value;
                 const [rows, cols] = gridSize.split('x').map(Number);
                 const numPairs = (rows * cols) / 2;
-                const icons = [...this.icons].sort(() => 0.5 - Math.random()).slice(0, numPairs);
-                const cards = [...icons, ...icons].sort(() => 0.5 - Math.random());
+                const selectedIcons = [...this.icons].sort(() => 0.5 - Math.random()).slice(0, numPairs);
+                const cards = [...selectedIcons, ...selectedIcons].sort(() => 0.5 - Math.random());
 
-                board.innerHTML = '';
-                board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                board.style.gridTemplateColumns = `repeat(${cols}, var(--card-size))`;
 
                 cards.forEach((icon) => {
                     const card = document.createElement('div');
                     card.className = 'card';
                     card.dataset.icon = icon;
-                    card.innerHTML = `<div class="card-front"></div><div class="card-back">${icon}</div>`;
-                    card.addEventListener('click', () => this.flipCard(card));
+                    card.innerHTML = `<div class="card-inner"><div class="card-front"></div><div class="card-back">${icon}</div></div>`;
+                    card.onclick = () => this.flipCard(card);
                     board.appendChild(card);
                 });
             }
@@ -524,8 +561,8 @@
                     card2.classList.add('matched');
                     this.matchedPairs++;
                     this.flippedCards = [];
-                    const [rows, cols] = this.container.querySelector('#gridSize').value.split('x').map(Number);
-                    if (this.matchedPairs === (rows * cols) / 2) setTimeout(() => this.showWinScreen(), 500);
+                    const [rows, cols] = document.getElementById('gridSize').value.split('x').map(Number);
+                    if (this.matchedPairs === (rows * cols) / 2) setTimeout(() => this.endGame(), 500);
                 } else {
                     setTimeout(() => {
                         card1.classList.remove('flipped');
@@ -534,95 +571,563 @@
                     }, 1000);
                 }
             }
-
-            showWinScreen() {
-                this.container.querySelector('.game-screen').classList.add('hidden');
-                this.container.querySelector('.score-overlay').classList.remove('hidden');
+            
+            endGame() {
                 triggerConfetti();
+                const scoreScreen = this.createScoreScreen("You found all pairs!", () => this.render());
+                this.container.appendChild(scoreScreen);
+            }
+        }
+
+        // 4. Snake Game
+        class SnakeGame extends Game {
+            constructor(container) {
+                super(container);
+                this.gameLoop = this.gameLoop.bind(this);
+                this.handleInput = this.handleInput.bind(this);
+            }
+
+            render() {
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const settingsHtml = `
+                    <div class="setting"><label for="speed">Speed:</label><select id="speed"><option value="slow">Slow</option><option value="normal" selected>Normal</option><option value="fast">Fast</option></select></div>
+                    <div class="setting"><label for="gridSize">Grid Size:</label><select id="gridSize"><option value="15">Small (15x15)</option><option value="20" selected>Medium (20x20)</option></select></div>
+                `;
+                const intro = this.createIntroPanel("Snake", "Use arrow keys or swipe to control the snake. Don't hit the walls or yourself!", settingsHtml, () => this.startGame());
+                this.container.appendChild(intro);
+            }
+
+            startGame() {
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+
+                const canvasSize = Math.min(window.innerWidth * 0.9, 400);
+                const canvas = document.createElement('canvas');
+                canvas.id = 'snake-canvas';
+                canvas.width = canvasSize;
+                canvas.height = canvasSize;
+                this.container.appendChild(canvas);
+                this.ctx = canvas.getContext('2d');
+
+                this.gridSize = parseInt(document.getElementById('gridSize').value, 10);
+                this.tileSize = canvas.width / this.gridSize;
+                this.direction = { x: 1, y: 0 };
+                this.nextDirection = { x: 1, y: 0 };
+                const startPos = Math.floor(this.gridSize / 2);
+                this.snake = [{ x: startPos, y: startPos }];
+                this.food = {};
+                this.score = 0;
+                this.gameOver = false;
+
+                this.generateFood();
+                this.bindEvents();
+                this.gameLoop();
+            }
+
+            bindEvents() {
+                document.addEventListener('keydown', this.handleInput);
+                // Swipe controls
+                let touchStartX = 0;
+                let touchStartY = 0;
+                this.container.addEventListener('touchstart', e => {
+                    touchStartX = e.changedTouches[0].screenX;
+                    touchStartY = e.changedTouches[0].screenY;
+                }, { passive: false });
+                this.container.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+                this.container.addEventListener('touchend', e => {
+                    const touchEndX = e.changedTouches[0].screenX;
+                    const touchEndY = e.changedTouches[0].screenY;
+                    const dx = touchEndX - touchStartX;
+                    const dy = touchEndY - touchStartY;
+                    if (Math.abs(dx) > Math.abs(dy)) { // Horizontal swipe
+                        if (dx > 0) this.handleInput({ key: 'ArrowRight' });
+                        else this.handleInput({ key: 'ArrowLeft' });
+                    } else { // Vertical swipe
+                        if (dy > 0) this.handleInput({ key: 'ArrowDown' });
+                        else this.handleInput({ key: 'ArrowUp' });
+                    }
+                });
+            }
+            
+            handleInput(e) {
+                switch (e.key) {
+                    case 'ArrowUp': if (this.direction.y === 0) this.nextDirection = { x: 0, y: -1 }; break;
+                    case 'ArrowDown': if (this.direction.y === 0) this.nextDirection = { x: 0, y: 1 }; break;
+                    case 'ArrowLeft': if (this.direction.x === 0) this.nextDirection = { x: -1, y: 0 }; break;
+                    case 'ArrowRight': if (this.direction.x === 0) this.nextDirection = { x: 1, y: 0 }; break;
+                }
+            }
+
+            gameLoop() {
+                if (this.gameOver) {
+                    this.endGame();
+                    return;
+                }
+                this.update();
+                this.draw();
+                const speed = document.getElementById('speed').value;
+                const timeout = speed === 'fast' ? 80 : (speed === 'slow' ? 200 : 120);
+                this.timerInterval = setTimeout(this.gameLoop, timeout);
+            }
+
+            update() {
+                this.direction = this.nextDirection;
+                const head = { x: this.snake[0].x + this.direction.x, y: this.snake[0].y + this.direction.y };
+
+                if (head.x < 0 || head.x >= this.gridSize || head.y < 0 || head.y >= this.gridSize || this.isCollision(head)) {
+                    this.gameOver = true;
+                    return;
+                }
+                this.snake.unshift(head);
+
+                if (head.x === this.food.x && head.y === this.food.y) {
+                    this.score++;
+                    this.generateFood();
+                } else {
+                    this.snake.pop();
+                }
+            }
+            
+            isCollision(head) {
+                return this.snake.some(segment => segment.x === head.x && segment.y === head.y);
+            }
+
+            generateFood() {
+                do {
+                    this.food = { x: Math.floor(Math.random() * this.gridSize), y: Math.floor(Math.random() * this.gridSize) };
+                } while (this.isCollision(this.food));
+            }
+
+            draw() {
+                this.ctx.fillStyle = '#1a202c';
+                this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+                this.ctx.fillStyle = 'hsl(140, 70%, 50%)'; // Snake color
+                this.snake.forEach(segment => this.ctx.fillRect(segment.x * this.tileSize, segment.y * this.tileSize, this.tileSize - 1, this.tileSize - 1));
+                this.ctx.fillStyle = 'hsl(0, 80%, 60%)'; // Food color
+                this.ctx.fillRect(this.food.x * this.tileSize, this.food.y * this.tileSize, this.tileSize, this.tileSize);
+            }
+
+            endGame() {
+                document.removeEventListener('keydown', this.handleInput);
+                const scoreText = `Final Score: ${this.score}`;
+                const scoreScreen = this.createScoreScreen(scoreText, () => this.render());
+                this.container.appendChild(scoreScreen);
             }
         }
         
-        // --- Other game classes like Snake, TapFrenzy, etc. would continue here in the same pattern ---
-        // For brevity, I'll include the stubs, the full implementation would mirror the classes above.
-        class SnakeGame extends Game { /* ... Full Implementation ... */ }
-        class TapFrenzyGame extends Game { /* ... Full Implementation ... */ }
-        class SpinWheelGame extends Game { /* ... Full Implementation ... */ }
-        class PictionaryGame extends Game { /* ... Full Implementation ... */ }
+        // 5. Tap Frenzy Game
+        class TapFrenzyGame extends Game {
+            constructor(container) {
+                super(container);
+                this.targetTimeout = null;
+            }
 
-        // --- app.js (Main Application Logic) ---
+            render() {
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const settingsHtml = `
+                    <div class="setting"><label for="duration">Duration:</label><select id="duration"><option value="15">15s</option><option value="30" selected>30s</option><option value="45">45s</option></select></div>
+                    <div class="setting"><label for="difficulty">Difficulty:</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
+                `;
+                const intro = this.createIntroPanel("Tap Frenzy", "Tap the red targets as fast as you can before time runs out!", settingsHtml, () => this.startGame());
+                this.container.appendChild(intro);
+            }
+
+            startGame() {
+                this.score = 0;
+                this.container.innerHTML = '';
+                
+                const timerDisplay = document.createElement('div');
+                timerDisplay.className = 'timer';
+                const scoreDisplay = document.createElement('div');
+                scoreDisplay.style.fontSize = "1.5rem";
+                scoreDisplay.textContent = "Score: 0";
+                
+                const gameArea = document.createElement('div');
+                gameArea.className = 'tap-frenzy-area';
+                this.container.append(timerDisplay, scoreDisplay, gameArea);
+
+                this.gameArea = gameArea;
+                this.scoreDisplay = scoreDisplay;
+
+                const duration = parseInt(document.getElementById('duration').value, 10);
+                this.startTimer(duration, timerDisplay, () => this.endGame());
+                this.spawnTarget();
+            }
+
+            spawnTarget() {
+                if (this.targetTimeout) clearTimeout(this.targetTimeout);
+                this.gameArea.innerHTML = ''; // Clear previous target
+                
+                const target = document.createElement('div');
+                target.className = 'target';
+                target.style.top = `${Math.random() * 90}%`;
+                target.style.left = `${Math.random() * 90}%`;
+                
+                target.onclick = () => {
+                    this.score++;
+                    this.scoreDisplay.textContent = `Score: ${this.score}`;
+                    this.spawnTarget();
+                };
+                this.gameArea.appendChild(target);
+
+                const difficulty = document.getElementById('difficulty').value;
+                const timeout = difficulty === 'hard' ? 700 : (difficulty === 'normal' ? 1200 : 2000);
+                this.targetTimeout = setTimeout(() => this.spawnTarget(), timeout);
+            }
+
+            endGame() {
+                clearTimeout(this.targetTimeout);
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const scoreText = `Final Score: ${this.score}`;
+                const scoreScreen = this.createScoreScreen(scoreText, () => this.render());
+                this.container.appendChild(scoreScreen);
+            }
+        }
+        
+        // 6. Spin The Wheel Game
+        class SpinWheelGame extends Game {
+            constructor(container) {
+                super(container);
+                this.segments = [];
+            }
+            
+            render() {
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const settingsHtml = `
+                    <div class="setting" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                        <label for="segmentsInput">Enter options (comma separated):</label>
+                        <input type="text" id="segmentsInput" value="Option 1, Option 2, Option 3, Option 4, Option 5, Option 6" style="width: calc(100% - 16px);">
+                    </div>
+                `;
+                const intro = this.createIntroPanel("Spin The Wheel", "Enter your choices below and spin the wheel to pick a random winner.", settingsHtml, () => this.showWheel());
+                this.container.appendChild(intro);
+            }
+
+            showWheel() {
+                this.segments = document.getElementById('segmentsInput').value.split(',').map(s => s.trim()).filter(s => s);
+                if (this.segments.length < 2) {
+                    alert("Please enter at least two options.");
+                    return;
+                }
+                
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+
+                const canvasSize = Math.min(window.innerWidth * 0.9, 400);
+                const wheelContainer = document.createElement('div');
+                wheelContainer.style.position = 'relative';
+                wheelContainer.style.width = `${canvasSize}px`;
+                wheelContainer.style.height = `${canvasSize}px`;
+                wheelContainer.style.margin = '20px auto';
+                
+                const canvas = document.createElement('canvas');
+                canvas.id = 'wheel-canvas';
+                canvas.width = canvasSize;
+                canvas.height = canvasSize;
+                this.ctx = canvas.getContext('2d');
+                
+                const pointer = document.createElement('div');
+                pointer.style.cssText = `position: absolute; left: 50%; top: -5px; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid var(--accent-warning); z-index: 10;`;
+                
+                wheelContainer.append(pointer, canvas);
+                
+                const spinButton = document.createElement('button');
+                spinButton.className = 'primary-button';
+                spinButton.id = 'spinButton';
+                spinButton.textContent = 'Spin!';
+                spinButton.onclick = () => this.spinWheel(canvas);
+                
+                this.container.append(wheelContainer, spinButton);
+                this.drawWheel(canvasSize);
+            }
+            
+            drawWheel(size) {
+                const numSegments = this.segments.length;
+                const anglePerSegment = (2 * Math.PI) / numSegments;
+                const radius = size / 2;
+                const colors = ['#e53e3e', '#3182ce', '#38a169', '#d69e2e', '#805ad5', '#dd6b20'];
+                
+                this.ctx.clearRect(0, 0, size, size);
+                this.ctx.font = `bold ${radius * 0.08}px Poppins`;
+
+                for (let i = 0; i < numSegments; i++) {
+                    const angle = i * anglePerSegment;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(radius, radius);
+                    this.ctx.arc(radius, radius, radius - 5, angle, angle + anglePerSegment);
+                    this.ctx.closePath();
+                    this.ctx.fillStyle = colors[i % colors.length];
+                    this.ctx.fill();
+
+                    this.ctx.save();
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.translate(radius, radius);
+                    this.ctx.rotate(angle + anglePerSegment / 2);
+                    this.ctx.textAlign = "right";
+                    this.ctx.fillText(this.segments[i].substring(0, 15), radius - 15, 5); // Truncate long text
+                    this.ctx.restore();
+                }
+            }
+            
+            spinWheel(canvas) {
+                document.getElementById('spinButton').disabled = true;
+                const spinAngle = Math.random() * 10 + 10; // Random rotations
+                const spinTime = 5000; // 5 seconds spin
+
+                canvas.style.transition = `transform ${spinTime}ms cubic-bezier(0.25, 1, 0.5, 1)`;
+                canvas.style.transform = `rotate(${spinAngle}rad)`;
+                
+                setTimeout(() => {
+                    const currentRotationRad = spinAngle % (2 * Math.PI);
+                    const currentRotationDeg = currentRotationRad * 180 / Math.PI;
+                    const degreesPerSegment = 360 / this.segments.length;
+                    const winningIndex = Math.floor(((360 - currentRotationDeg) % 360) / degreesPerSegment);
+                    const result = this.segments[winningIndex];
+                    
+                    this.showResult(result);
+                    canvas.style.transition = 'none';
+                    canvas.style.transform = `rotate(${currentRotationRad}rad)`;
+                }, spinTime);
+            }
+
+            showResult(result) {
+                const resultOverlay = document.createElement('div');
+                resultOverlay.className = 'result-overlay';
+                resultOverlay.style.marginTop = '20px';
+                resultOverlay.innerHTML = `<h2>Winner:</h2><p style="font-size: 2rem; color: var(--accent-warning); margin: 10px;">${result}</p>`;
+                
+                const spinAgainButton = document.createElement('button');
+                spinAgainButton.className = 'primary-button';
+                spinAgainButton.textContent = 'Spin Again';
+                spinAgainButton.onclick = () => {
+                    resultOverlay.remove();
+                    document.getElementById('spinButton').disabled = false;
+                };
+                resultOverlay.appendChild(spinAgainButton);
+                this.container.appendChild(resultOverlay);
+            }
+        }
+        
+        // 7. Pictionary Game
+        class PictionaryGame extends Game {
+            constructor(container) {
+                super(container);
+                this.words = gameAssets.pictionary;
+                this.drawing = false;
+                this.brushColor = "#000000";
+                this.brushSize = 5;
+            }
+
+            render() {
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const settingsHtml = `
+                    <div class="setting"><label for="timePerTurn">Time per turn:</label><select id="timePerTurn"><option value="60" selected>60s</option><option value="90">90s</option><option value="120">120s</option></select></div>
+                    <div class="setting"><label for="difficulty">Difficulty:</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
+                `;
+                const intro = this.createIntroPanel("Draw & Guess", "One person draws the word on screen. The rest guess! Pass the phone to the drawer to start.", settingsHtml, () => this.showPassScreen());
+                this.container.appendChild(intro);
+            }
+
+            showPassScreen() {
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const passScreen = document.createElement('div');
+                passScreen.innerHTML = `<p style="font-size: 1.5rem; margin: 40px 0;">Pass to the Drawer. Don't let others see the word!</p>`;
+                const readyButton = document.createElement('button');
+                readyButton.className = 'primary-button';
+                readyButton.textContent = 'Show Word';
+                readyButton.onclick = () => this.runGame();
+                passScreen.appendChild(readyButton);
+                this.container.appendChild(passScreen);
+            }
+
+            runGame() {
+                this.loadWordPool('difficulty');
+                this.container.innerHTML = ''; 
+                
+                const wordToDraw = this.getNextWord();
+                const wordDisplay = document.createElement('h3');
+                wordDisplay.textContent = `Your word: ${wordToDraw}`;
+                const timerDisplay = document.createElement('div');
+                timerDisplay.className = 'timer';
+
+                const canvasSize = Math.min(window.innerWidth * 0.95, 500);
+                const canvas = document.createElement('canvas');
+                canvas.id = 'pictionary-canvas';
+                canvas.width = canvasSize;
+                canvas.height = canvasSize * 0.8;
+                this.ctx = canvas.getContext('2d');
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+
+                const controls = this.createDrawingControls();
+                const doneButton = document.createElement('button');
+                doneButton.className = 'primary-button success';
+                doneButton.textContent = 'Team Guessed It!';
+                doneButton.onclick = () => this.endGame(true);
+
+                this.container.append(wordDisplay, timerDisplay, canvas, controls, doneButton);
+                this.bindCanvasEvents(canvas);
+                
+                const timePerTurn = parseInt(document.getElementById('timePerTurn').value, 10);
+                this.startTimer(timePerTurn, timerDisplay, () => this.endGame(false));
+            }
+
+            createDrawingControls() {
+                const controlsContainer = document.createElement('div');
+                controlsContainer.className = 'pictionary-controls';
+                
+                // Color pickers
+                ['#000000', '#FF0000', '#0000FF', '#008000', '#FFFF00', '#FFFFFF'].forEach(color => {
+                    const colorInput = document.createElement('input');
+                    colorInput.type = 'color';
+                    colorInput.value = color;
+                    colorInput.onchange = (e) => this.brushColor = e.target.value;
+                    controlsContainer.appendChild(colorInput);
+                });
+
+                // Brush sizes
+                [2, 5, 10].forEach(size => {
+                    const sizeButton = document.createElement('div');
+                    sizeButton.className = 'brush-size';
+                    if(size === this.brushSize) sizeButton.classList.add('active');
+                    sizeButton.innerHTML = `<div style="width:${size*2}px; height:${size*2}px;"></div>`;
+                    sizeButton.onclick = () => {
+                        this.brushSize = size;
+                        controlsContainer.querySelectorAll('.brush-size').forEach(btn => btn.classList.remove('active'));
+                        sizeButton.classList.add('active');
+                    };
+                    controlsContainer.appendChild(sizeButton);
+                });
+
+                // Clear button
+                const clearButton = document.createElement('button');
+                clearButton.className = 'secondary-button';
+                clearButton.textContent = 'Clear';
+                clearButton.onclick = () => this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+                controlsContainer.appendChild(clearButton);
+                
+                return controlsContainer;
+            }
+
+            bindCanvasEvents(canvas) {
+                const getPos = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = e.clientX || e.touches[0].clientX;
+                    const clientY = e.clientY || e.touches[0].clientY;
+                    return { x: clientX - rect.left, y: clientY - rect.top };
+                };
+                const startDrawing = (e) => {
+                    this.drawing = true;
+                    const pos = getPos(e);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(pos.x, pos.y);
+                };
+                const stopDrawing = () => { this.drawing = false; };
+                const draw = (e) => {
+                    if (!this.drawing) return;
+                    const pos = getPos(e);
+                    this.ctx.lineWidth = this.brushSize;
+                    this.ctx.strokeStyle = this.brushColor;
+                    this.ctx.lineTo(pos.x, pos.y);
+                    this.ctx.stroke();
+                };
+
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseleave', stopDrawing);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false });
+                canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); }, { passive: false });
+                canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, { passive: false });
+            }
+
+            endGame(guessedCorrectly) {
+                clearInterval(this.timerInterval);
+                this.container.innerHTML = '';
+                this.container.appendChild(this.createHeader());
+                const resultText = guessedCorrectly ? "Congratulations to your team!" : "Time's up!";
+                const scoreScreen = this.createScoreScreen(resultText, () => this.render());
+                this.container.appendChild(scoreScreen);
+            }
+        }
+
+        // --- Application Initialization ---
         const appState = {
             manifest: [
-              { "id": "charades", "title": "Charades", "short": "Act it out. One phone. Many laughs.", "type": "party", "players": "2+", "complexity": 2 },
-              { "id": "quiz", "title": "Quiz Party", "short": "Quick group trivia rounds, single phone.", "type": "party", "players": "2+", "complexity": 3 },
-              { "id": "memory", "title": "Memory Match", "short": "Classic flip-and-match for solo or turns.", "type": "solo", "players": "1+", "complexity": 2 },
-               { "id": "snake", "title": "Snake", "short": "Single-player classic with swipe controls.", "type": "solo", "players": "1", "complexity": 3 },
-               { "id": "tap-frenzy", "title": "Tap Frenzy", "short": "Simple high-score tap game for turns.", "type": "solo", "players": "1+", "complexity": 2 },
-               { "id": "spin-wheel", "title": "Spin The Wheel", "short": "Randomly choose tasks or players.", "type": "party", "players": "2+", "complexity": 2 },
-               { "id": "pictionary", "title": "Draw & Guess", "short": "One draws on phone; group guesses.", "type": "party", "players": "2+", "complexity": 3 }
+              { id: "charades", title: "Charades", short: "Act it out. One phone. Many laughs.", players: "2+", complexity: 2, class: CharadesGame },
+              { id: "pictionary", title: "Draw & Guess", short: "One draws on phone; group guesses.", players: "3+", complexity: 3, class: PictionaryGame },
+              { id: "quiz", title: "Quiz Party", short: "Quick group trivia rounds, single phone.", players: "2+", complexity: 3, class: QuizGame },
+              { id: "memory", title: "Memory Match", short: "Classic flip-and-match for solo or turns.", players: "1+", complexity: 2, class: MemoryGame },
+              { id: "snake", title: "Snake", short: "Single-player classic. Eat and grow.", players: "1", complexity: 3, class: SnakeGame },
+              { id: "tap-frenzy", title: "Tap Frenzy", short: "Test your reflexes. Tap the targets fast!", players: "1+", complexity: 2, class: TapFrenzyGame },
+              { id: "spin-wheel", title: "Spin The Wheel", short: "Randomly choose tasks or players.", players: "2+", complexity: 1, class: SpinWheelGame }
             ],
-            gameInstances: {
-                charades: CharadesGame,
-                quiz: QuizGame,
-                memory: MemoryGame,
-                snake: SnakeGame,
-                'tap-frenzy': TapFrenzyGame,
-                'spin-wheel': SpinWheelGame,
-                pictionary: PictionaryGame
-            },
-            currentGame: null
+            currentGameInstance: null
         };
 
+        function loadGame(gameId) {
+            // Clear previous game instance if exists
+            if (appState.currentGameInstance) {
+                appState.currentGameInstance.destroy();
+            }
+            
+            const gameData = appState.manifest.find(g => g.id === gameId);
+            if (!gameData) {
+                console.error("Game not found:", gameId);
+                renderHub();
+                return;
+            }
+
+            const mainContainer = document.getElementById('gb-app');
+            mainContainer.innerHTML = ''; // Clear hub content
+            mainContainer.classList.add('page-enter');
+            
+            appState.currentGameInstance = new gameData.class(mainContainer);
+            appState.currentGameInstance.init();
+
+            requestAnimationFrame(() => mainContainer.classList.add('page-enter-active'));
+        }
+
         function renderHub() {
-            appContainer.innerHTML = '';
+            if (appState.currentGameInstance) {
+                appState.currentGameInstance.destroy();
+                appState.currentGameInstance = null;
+            }
+            
+            const mainContainer = document.getElementById('gb-app');
+            mainContainer.innerHTML = '';
+            mainContainer.classList.add('page-enter');
+
             const hubGrid = document.createElement('div');
             hubGrid.className = 'hub-grid';
 
             appState.manifest.forEach(game => {
-                const gameCard = createGameCard(game);
-                hubGrid.appendChild(gameCard);
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.innerHTML = `
+                    <h3>${game.title}</h3>
+                    <p>${game.short}</p>
+                    <div class="game-card-tags">
+                        <span>${game.players} Players</span>
+                        <span>${'★'.repeat(game.complexity)}${'☆'.repeat(5 - game.complexity)}</span>
+                    </div>
+                `;
+                card.onclick = () => loadGame(game.id);
+                hubGrid.appendChild(card);
             });
 
-            hubGrid.addEventListener('click', (e) => {
-                const card = e.target.closest('.game-card');
-                if (card) {
-                    const gameId = card.dataset.gameId;
-                    loadGame(gameId);
-                }
-            });
-
-            appContainer.appendChild(hubGrid);
-            currentView = 'hub';
+            mainContainer.appendChild(hubGrid);
+            requestAnimationFrame(() => mainContainer.classList.add('page-enter-active'));
         }
 
-        function loadGame(gameId) {
-            if (currentGameInstance) {
-                currentGameInstance.destroy();
-                currentGameInstance = null;
-            }
-            const gameManifest = appState.manifest.find(g => g.id === gameId);
-            const GameClass = appState.gameInstances[gameId];
-
-            if (!gameManifest || !GameClass) {
-                console.error(`Game with id ${gameId} not found.`);
-                renderHub();
-                return;
-            }
-            
-            currentGameInstance = new GameClass(appContainer, gameManifest);
-            currentGameInstance.init();
-            currentView = 'game';
-        }
-
-        function renderView() {
-           if (currentView === 'hub') {
-                renderHub();
-            } else if (currentView === 'game' && currentGameInstance) {
-                // The game is already rendered, no need to do anything
-            }
-        }
-        
-        // Initial render:
-        renderHub();
+        // Initial load
+        document.addEventListener('DOMContentLoaded', renderHub);
     </script>
 </body>
 </html>
