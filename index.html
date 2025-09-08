@@ -214,27 +214,15 @@
             setTimeout(() => container.remove(), 5000);
         }
 
-        // --- router.js (CORRECTED) ---
-        const routes = {};
-        function router() {
-            const path = window.location.hash.slice(1);
-            const parts = path.split('/').filter(p => p); 
-            const base = parts[0] || '';
-            const params = parts.slice(1);
-            const routeKey = `/${base}`;
+        // --- router.js (Simplified - NO EXTERNAL ROUTING) ---
+        let currentView = 'hub';
+        let currentGameInstance = null;
+        const appContainer = document.getElementById('gb-app');
 
-            if (routes[routeKey]) {
-                routes[routeKey](...params);
-            } else if (routes['/']) {
-                routes['/']();
-            }
+        function navigateTo(gameId) {
+            currentView = gameId ? 'game' : 'hub';
+            renderView();
         }
-        function addRoute(path, handler) { routes[path] = handler; }
-        function initRouter() {
-            window.addEventListener('hashchange', router);
-            window.addEventListener('load', router);
-        }
-        function navigate(path) { window.location.hash = path; }
 
         // --- games/base.js ---
         class Game {
@@ -253,7 +241,7 @@
                 const button = document.createElement('button');
                 button.textContent = 'Back to Hub';
                 button.className = 'primary-button back-to-hub-button';
-                button.onclick = () => navigate('#/');
+                button.onclick = () => navigateTo(null); // Go back to hub
                 return button;
             }
             render() { /* To be implemented by child classes */ }
@@ -272,7 +260,7 @@
                     <div class="game-container charades-game">
                         <div class="intro-panel">
                             <h2>Charades</h2>
-                            <p>Hand the phone to the actor. They tap 'Reveal' to see their secret word, then the timer starts!</p>
+                            <p>Tap 'Ready' -> hand phone to actor -> Actor taps 'Reveal' to see their secret word, then the timer starts!</p>
                             <div class="settings">
                                 <div class="setting"><label for="timePerTurn">Time per turn:</label><select id="timePerTurn"><option value="30">30s</option><option value="60" selected>60s</option><option value="90">90s</option></select></div>
                                 <div class="setting"><label for="difficulty">Difficulty:</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
@@ -561,36 +549,31 @@
         class SpinWheelGame extends Game { /* ... Full Implementation ... */ }
         class PictionaryGame extends Game { /* ... Full Implementation ... */ }
 
-
         // --- app.js (Main Application Logic) ---
         const appState = {
             manifest: [
               { "id": "charades", "title": "Charades", "short": "Act it out. One phone. Many laughs.", "type": "party", "players": "2+", "complexity": 2 },
               { "id": "quiz", "title": "Quiz Party", "short": "Quick group trivia rounds, single phone.", "type": "party", "players": "2+", "complexity": 3 },
               { "id": "memory", "title": "Memory Match", "short": "Classic flip-and-match for solo or turns.", "type": "solo", "players": "1+", "complexity": 2 },
-              // { "id": "snake", "title": "Snake", "short": "Single-player classic with swipe controls.", "type": "solo", "players": "1", "complexity": 3 },
-              // { "id": "tap-frenzy", "title": "Tap Frenzy", "short": "Simple high-score tap game for turns.", "type": "solo", "players": "1+", "complexity": 2 },
-              // { "id": "spin-wheel", "title": "Spin The Wheel", "short": "Randomly choose tasks or players.", "type": "party", "players": "2+", "complexity": 2 },
-              // { "id": "pictionary", "title": "Draw & Guess", "short": "One draws on phone; group guesses.", "type": "party", "players": "2+", "complexity": 3 }
+               { "id": "snake", "title": "Snake", "short": "Single-player classic with swipe controls.", "type": "solo", "players": "1", "complexity": 3 },
+               { "id": "tap-frenzy", "title": "Tap Frenzy", "short": "Simple high-score tap game for turns.", "type": "solo", "players": "1+", "complexity": 2 },
+               { "id": "spin-wheel", "title": "Spin The Wheel", "short": "Randomly choose tasks or players.", "type": "party", "players": "2+", "complexity": 2 },
+               { "id": "pictionary", "title": "Draw & Guess", "short": "One draws on phone; group guesses.", "type": "party", "players": "2+", "complexity": 3 }
             ],
             gameInstances: {
                 charades: CharadesGame,
                 quiz: QuizGame,
                 memory: MemoryGame,
-                // snake: SnakeGame,
-                // 'tap-frenzy': TapFrenzyGame,
-                // 'spin-wheel': SpinWheelGame,
-                // pictionary: PictionaryGame
+                snake: SnakeGame,
+                'tap-frenzy': TapFrenzyGame,
+                'spin-wheel': SpinWheelGame,
+                pictionary: PictionaryGame
             },
             currentGame: null
         };
 
         function renderHub() {
-            const mainContainer = document.getElementById('gb-app');
-            mainContainer.classList.remove('page-exit-active');
-            mainContainer.classList.add('page-enter');
-            mainContainer.innerHTML = ''; 
-
+            appContainer.innerHTML = '';
             const hubGrid = document.createElement('div');
             hubGrid.className = 'hub-grid';
 
@@ -599,57 +582,47 @@
                 hubGrid.appendChild(gameCard);
             });
 
-            mainContainer.appendChild(hubGrid);
-
             hubGrid.addEventListener('click', (e) => {
                 const card = e.target.closest('.game-card');
                 if (card) {
-                    navigate(`#/game/${card.dataset.gameId}`);
+                    const gameId = card.dataset.gameId;
+                    loadGame(gameId);
                 }
             });
-            
-            setTimeout(() => mainContainer.classList.add('page-enter-active'), 10);
+
+            appContainer.appendChild(hubGrid);
+            currentView = 'hub';
         }
 
-        async function loadGame(gameId) {
-            if (appState.currentGame) {
-                appState.currentGame.destroy();
-                appState.currentGame = null;
+        function loadGame(gameId) {
+            if (currentGameInstance) {
+                currentGameInstance.destroy();
+                currentGameInstance = null;
             }
-
-            const mainContainer = document.getElementById('gb-app');
-            mainContainer.classList.add('page-exit');
-            requestAnimationFrame(() => mainContainer.classList.add('page-exit-active'));
-
-            await new Promise(resolve => setTimeout(resolve, 300));
-
-            mainContainer.innerHTML = '';
-
             const gameManifest = appState.manifest.find(g => g.id === gameId);
             const GameClass = appState.gameInstances[gameId];
 
             if (!gameManifest || !GameClass) {
                 console.error(`Game with id ${gameId} not found.`);
-                navigate('#/');
+                renderHub();
                 return;
             }
-
-            appState.currentGame = new GameClass(mainContainer, gameManifest);
-            appState.currentGame.init();
             
-            mainContainer.classList.remove('page-exit', 'page-exit-active');
-            mainContainer.classList.add('page-enter');
-            requestAnimationFrame(() => mainContainer.classList.add('page-enter-active'));
+            currentGameInstance = new GameClass(appContainer, gameManifest);
+            currentGameInstance.init();
+            currentView = 'game';
         }
 
-        function initApp() {
-            initRouter();
-            addRoute('/', renderHub);
-            addRoute('/game', loadGame);
-            router();
+        function renderView() {
+           if (currentView === 'hub') {
+                renderHub();
+            } else if (currentView === 'game' && currentGameInstance) {
+                // The game is already rendered, no need to do anything
+            }
         }
-
-        document.addEventListener('DOMContentLoaded', initApp);
+        
+        // Initial render:
+        renderHub();
     </script>
 </body>
 </html>
