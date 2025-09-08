@@ -159,12 +159,12 @@
 
         /* Memory Match Cards */
         .game-board { display: grid; gap: 8px; }
-        .card { width: var(--card-size); height: var(--card-size); cursor: pointer; position: relative; perspective: 1000px; }
+        .card { width: 60px; height: 60px; cursor: pointer; position: relative; perspective: 1000px; }
         .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
         .card.flipped .card-inner { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
         .card-front { background-color: var(--bg-light); }
-        .card-back { background-color: var(--accent-color); transform: rotateY(180deg); font-size: calc(var(--card-size) * 0.6); }
+        .card-back { background-color: var(--accent-color); transform: rotateY(180deg); font-size: 30px; }
         .card.matched { opacity: 0.3; pointer-events: none; }
 
         /* Tap Frenzy Target */
@@ -247,6 +247,7 @@
                 this.words = [];
                 this.wordPool = [];
                 this.score = 0;
+                this.config = {}; // To store game settings
             }
 
             init() {
@@ -315,16 +316,9 @@
             }
 
             // --- Word Management ---
-            loadWordPool(categoryKey) {
-                const category = document.getElementById(categoryKey).value;
-                this.wordPool = [...(this.words[category] || [])];
-                this.shuffleArray(this.wordPool);
-            }
-            
             getNextWord() {
                 if (this.wordPool.length === 0) {
-                    this.loadWordPool('difficulty'); // Reload pool if empty
-                    if (this.wordPool.length === 0) return "Out of Words"; // Safety check
+                   return "Out of Words";
                 }
                 return this.wordPool.pop();
             }
@@ -354,7 +348,12 @@
                     <div class="setting"><label for="timePerTurn">Time per turn:</label><select id="timePerTurn"><option value="60" selected>60s</option><option value="90">90s</option><option value="120">120s</option></select></div>
                     <div class="setting"><label for="difficulty">Difficulty:</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
                 `;
-                const intro = this.createIntroPanel("Charades", "Act out the word on screen for your team to guess. Get as many right as you can before time runs out!", settingsHtml, () => this.showPassScreen());
+                const startCallback = () => {
+                    this.config.time = parseInt(document.getElementById('timePerTurn').value, 10);
+                    this.config.difficulty = document.getElementById('difficulty').value;
+                    this.showPassScreen();
+                };
+                const intro = this.createIntroPanel("Charades", "Act out the word on screen for your team to guess. Get as many right as you can before time runs out!", settingsHtml, startCallback);
                 this.container.appendChild(intro);
             }
 
@@ -362,6 +361,7 @@
                 this.container.innerHTML = '';
                 this.container.appendChild(this.createHeader());
                 const passScreen = document.createElement('div');
+                passScreen.className = 'game-container';
                 passScreen.innerHTML = `<p style="font-size: 1.5rem; margin: 40px 0;">Pass the phone to the actor.</p>`;
                 const readyButton = document.createElement('button');
                 readyButton.className = 'primary-button';
@@ -373,7 +373,8 @@
 
             runGame() {
                 this.score = { correct: 0, skipped: 0 };
-                this.loadWordPool('difficulty');
+                this.wordPool = [...(this.words[this.config.difficulty] || [])];
+                this.shuffleArray(this.wordPool);
                 this.container.innerHTML = ''; // Clear screen
 
                 const wordDisplay = document.createElement('div');
@@ -396,13 +397,17 @@
                 this.container.append(timerDisplay, wordDisplay, actions);
                 
                 this.nextWord(null); // Load first word
-                const timePerTurn = parseInt(document.getElementById('timePerTurn').value, 10);
-                this.startTimer(timePerTurn, timerDisplay, () => this.endGame());
+                this.startTimer(this.config.time, timerDisplay, () => this.endGame());
             }
             
             nextWord(isCorrect) {
                  if (isCorrect === true) this.score.correct++;
                  else if (isCorrect === false) this.score.skipped++;
+                 
+                 if (this.wordPool.length === 0) {
+                    this.wordPool = [...(this.words[this.config.difficulty] || [])];
+                    this.shuffleArray(this.wordPool);
+                 }
                  this.container.querySelector('.word-display').textContent = this.getNextWord();
             }
 
@@ -430,22 +435,25 @@
                     <div class="setting"><label for="numberOfQuestions">Questions:</label><select id="numberOfQuestions"><option value="3">3</option><option value="5" selected>5</option></select></div>
                     <div class="setting"><label for="category">Category:</label><select id="category"><option value="general" selected>General</option><option value="movies">Movies</option><option value="history">History</option></select></div>
                 `;
-                const intro = this.createIntroPanel("Quiz Party", "Answer the questions as quickly as possible. Good luck!", settingsHtml, () => this.startGame());
+                const startCallback = () => {
+                    this.config.questions = parseInt(document.getElementById('numberOfQuestions').value, 10);
+                    this.config.category = document.getElementById('category').value;
+                    this.startGame();
+                };
+                const intro = this.createIntroPanel("Quiz Party", "Answer the questions as quickly as possible. Good luck!", settingsHtml, startCallback);
                 this.container.appendChild(intro);
             }
 
             startGame() {
                 this.score = 0;
                 this.currentQuestionIndex = 0;
-                const category = document.getElementById('category').value;
-                this.questionPool = [...(this.questions[category] || [])];
+                this.questionPool = [...(this.questions[this.config.category] || [])];
                 this.shuffleArray(this.questionPool);
                 this.showNextQuestion();
             }
 
             showNextQuestion() {
-                const numberOfQuestions = parseInt(document.getElementById('numberOfQuestions').value, 10);
-                if (this.currentQuestionIndex >= numberOfQuestions || this.currentQuestionIndex >= this.questionPool.length) {
+                if (this.currentQuestionIndex >= this.config.questions || this.currentQuestionIndex >= this.questionPool.length) {
                     this.endGame();
                     return;
                 }
@@ -454,7 +462,7 @@
                 this.container.innerHTML = ''; // Clear screen
 
                 const progress = document.createElement('p');
-                progress.textContent = `Question ${this.currentQuestionIndex + 1} of ${numberOfQuestions}`;
+                progress.textContent = `Question ${this.currentQuestionIndex + 1} of ${this.config.questions}`;
                 const questionText = document.createElement('h3');
                 questionText.style.fontSize = "1.5rem";
                 questionText.style.margin = "20px";
@@ -470,25 +478,22 @@
                     choicesContainer.appendChild(choiceButton);
                 });
                 
-                this.container.append(progress, questionText, choicesContainer);
+                this.container.append(this.createHeader(), progress, questionText, choicesContainer);
                 this.currentQuestionIndex++;
             }
 
             checkAnswer(isCorrect, choicesContainer) {
-                // Disable buttons after selection
                 Array.from(choicesContainer.children).forEach(button => button.disabled = true);
-                
                 if (isCorrect) {
                     this.score++;
-                    // Highlight correct answer (optional visual feedback)
                 }
-                setTimeout(() => this.showNextQuestion(), 1000); // Pause before next question
+                setTimeout(() => this.showNextQuestion(), 1000);
             }
 
             endGame() {
                 this.container.innerHTML = '';
                 this.container.appendChild(this.createHeader());
-                const scoreText = `Your score: ${this.score} / ${document.getElementById('numberOfQuestions').value}`;
+                const scoreText = `Your score: ${this.score} / ${this.config.questions}`;
                 const scoreScreen = this.createScoreScreen(scoreText, () => this.render());
                 this.container.appendChild(scoreScreen);
             }
@@ -509,7 +514,11 @@
                 const settingsHtml = `
                     <div class="setting"><label for="gridSize">Grid size:</label><select id="gridSize"><option value="2x4">Small (2x4)</option><option value="4x4" selected>Medium (4x4)</option><option value="4x6">Large (4x6)</option></select></div>
                 `;
-                const intro = this.createIntroPanel("Memory Match", "Flip cards to find matching pairs!", settingsHtml, () => this.startGame());
+                const startCallback = () => {
+                    this.config.gridSize = document.getElementById('gridSize').value;
+                    this.startGame();
+                };
+                const intro = this.createIntroPanel("Memory Match", "Flip cards to find matching pairs!", settingsHtml, startCallback);
                 this.container.appendChild(intro);
             }
 
@@ -527,17 +536,19 @@
             }
 
             renderBoard(board) {
-                const gridSize = document.getElementById('gridSize').value;
-                const [rows, cols] = gridSize.split('x').map(Number);
+                const [rows, cols] = this.config.gridSize.split('x').map(Number);
                 const numPairs = (rows * cols) / 2;
                 const selectedIcons = [...this.icons].sort(() => 0.5 - Math.random()).slice(0, numPairs);
                 const cards = [...selectedIcons, ...selectedIcons].sort(() => 0.5 - Math.random());
+                const cardSize = cols === 6 ? 50 : 60;
 
-                board.style.gridTemplateColumns = `repeat(${cols}, var(--card-size))`;
+                board.style.gridTemplateColumns = `repeat(${cols}, ${cardSize}px)`;
 
                 cards.forEach((icon) => {
                     const card = document.createElement('div');
                     card.className = 'card';
+                    card.style.width = `${cardSize}px`;
+                    card.style.height = `${cardSize}px`;
                     card.dataset.icon = icon;
                     card.innerHTML = `<div class="card-inner"><div class="card-front"></div><div class="card-back">${icon}</div></div>`;
                     card.onclick = () => this.flipCard(card);
@@ -561,7 +572,7 @@
                     card2.classList.add('matched');
                     this.matchedPairs++;
                     this.flippedCards = [];
-                    const [rows, cols] = document.getElementById('gridSize').value.split('x').map(Number);
+                    const [rows, cols] = this.config.gridSize.split('x').map(Number);
                     if (this.matchedPairs === (rows * cols) / 2) setTimeout(() => this.endGame(), 500);
                 } else {
                     setTimeout(() => {
@@ -594,7 +605,12 @@
                     <div class="setting"><label for="speed">Speed:</label><select id="speed"><option value="slow">Slow</option><option value="normal" selected>Normal</option><option value="fast">Fast</option></select></div>
                     <div class="setting"><label for="gridSize">Grid Size:</label><select id="gridSize"><option value="15">Small (15x15)</option><option value="20" selected>Medium (20x20)</option></select></div>
                 `;
-                const intro = this.createIntroPanel("Snake", "Use arrow keys or swipe to control the snake. Don't hit the walls or yourself!", settingsHtml, () => this.startGame());
+                const startCallback = () => {
+                    this.config.speed = document.getElementById('speed').value;
+                    this.config.gridSize = parseInt(document.getElementById('gridSize').value, 10);
+                    this.startGame();
+                };
+                const intro = this.createIntroPanel("Snake", "Use arrow keys or swipe to control the snake. Don't hit the walls or yourself!", settingsHtml, startCallback);
                 this.container.appendChild(intro);
             }
 
@@ -610,7 +626,7 @@
                 this.container.appendChild(canvas);
                 this.ctx = canvas.getContext('2d');
 
-                this.gridSize = parseInt(document.getElementById('gridSize').value, 10);
+                this.gridSize = this.config.gridSize;
                 this.tileSize = canvas.width / this.gridSize;
                 this.direction = { x: 1, y: 0 };
                 this.nextDirection = { x: 1, y: 0 };
@@ -627,23 +643,21 @@
 
             bindEvents() {
                 document.addEventListener('keydown', this.handleInput);
-                // Swipe controls
                 let touchStartX = 0;
                 let touchStartY = 0;
                 this.container.addEventListener('touchstart', e => {
                     touchStartX = e.changedTouches[0].screenX;
                     touchStartY = e.changedTouches[0].screenY;
-                }, { passive: false });
-                this.container.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+                }, { passive: true });
                 this.container.addEventListener('touchend', e => {
                     const touchEndX = e.changedTouches[0].screenX;
                     const touchEndY = e.changedTouches[0].screenY;
                     const dx = touchEndX - touchStartX;
                     const dy = touchEndY - touchStartY;
-                    if (Math.abs(dx) > Math.abs(dy)) { // Horizontal swipe
+                    if (Math.abs(dx) > Math.abs(dy)) {
                         if (dx > 0) this.handleInput({ key: 'ArrowRight' });
                         else this.handleInput({ key: 'ArrowLeft' });
-                    } else { // Vertical swipe
+                    } else {
                         if (dy > 0) this.handleInput({ key: 'ArrowDown' });
                         else this.handleInput({ key: 'ArrowUp' });
                     }
@@ -666,8 +680,7 @@
                 }
                 this.update();
                 this.draw();
-                const speed = document.getElementById('speed').value;
-                const timeout = speed === 'fast' ? 80 : (speed === 'slow' ? 200 : 120);
+                const timeout = this.config.speed === 'fast' ? 80 : (this.config.speed === 'slow' ? 200 : 120);
                 this.timerInterval = setTimeout(this.gameLoop, timeout);
             }
 
@@ -730,7 +743,12 @@
                     <div class="setting"><label for="duration">Duration:</label><select id="duration"><option value="15">15s</option><option value="30" selected>30s</option><option value="45">45s</option></select></div>
                     <div class="setting"><label for="difficulty">Difficulty:</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
                 `;
-                const intro = this.createIntroPanel("Tap Frenzy", "Tap the red targets as fast as you can before time runs out!", settingsHtml, () => this.startGame());
+                const startCallback = () => {
+                    this.config.duration = parseInt(document.getElementById('duration').value, 10);
+                    this.config.difficulty = document.getElementById('difficulty').value;
+                    this.startGame();
+                };
+                const intro = this.createIntroPanel("Tap Frenzy", "Tap the red targets as fast as you can before time runs out!", settingsHtml, startCallback);
                 this.container.appendChild(intro);
             }
 
@@ -746,19 +764,18 @@
                 
                 const gameArea = document.createElement('div');
                 gameArea.className = 'tap-frenzy-area';
-                this.container.append(timerDisplay, scoreDisplay, gameArea);
+                this.container.append(this.createHeader(), timerDisplay, scoreDisplay, gameArea);
 
                 this.gameArea = gameArea;
                 this.scoreDisplay = scoreDisplay;
 
-                const duration = parseInt(document.getElementById('duration').value, 10);
-                this.startTimer(duration, timerDisplay, () => this.endGame());
+                this.startTimer(this.config.duration, timerDisplay, () => this.endGame());
                 this.spawnTarget();
             }
 
             spawnTarget() {
                 if (this.targetTimeout) clearTimeout(this.targetTimeout);
-                this.gameArea.innerHTML = ''; // Clear previous target
+                this.gameArea.innerHTML = '';
                 
                 const target = document.createElement('div');
                 target.className = 'target';
@@ -772,8 +789,7 @@
                 };
                 this.gameArea.appendChild(target);
 
-                const difficulty = document.getElementById('difficulty').value;
-                const timeout = difficulty === 'hard' ? 700 : (difficulty === 'normal' ? 1200 : 2000);
+                const timeout = this.config.difficulty === 'hard' ? 700 : (this.config.difficulty === 'normal' ? 1200 : 2000);
                 this.targetTimeout = setTimeout(() => this.spawnTarget(), timeout);
             }
 
@@ -803,14 +819,19 @@
                         <input type="text" id="segmentsInput" value="Option 1, Option 2, Option 3, Option 4, Option 5, Option 6" style="width: calc(100% - 16px);">
                     </div>
                 `;
-                const intro = this.createIntroPanel("Spin The Wheel", "Enter your choices below and spin the wheel to pick a random winner.", settingsHtml, () => this.showWheel());
+                const startCallback = () => {
+                    this.config.segments = document.getElementById('segmentsInput').value;
+                    this.showWheel();
+                };
+                const intro = this.createIntroPanel("Spin The Wheel", "Enter your choices below and spin the wheel to pick a random winner.", settingsHtml, startCallback);
                 this.container.appendChild(intro);
             }
 
             showWheel() {
-                this.segments = document.getElementById('segmentsInput').value.split(',').map(s => s.trim()).filter(s => s);
+                this.segments = this.config.segments.split(',').map(s => s.trim()).filter(s => s);
                 if (this.segments.length < 2) {
                     alert("Please enter at least two options.");
+                    this.render(); // Go back to settings
                     return;
                 }
                 
@@ -868,29 +889,30 @@
                     this.ctx.translate(radius, radius);
                     this.ctx.rotate(angle + anglePerSegment / 2);
                     this.ctx.textAlign = "right";
-                    this.ctx.fillText(this.segments[i].substring(0, 15), radius - 15, 5); // Truncate long text
+                    this.ctx.fillText(this.segments[i].substring(0, 15), radius - 15, 5);
                     this.ctx.restore();
                 }
             }
             
             spinWheel(canvas) {
                 document.getElementById('spinButton').disabled = true;
-                const spinAngle = Math.random() * 10 + 10; // Random rotations
-                const spinTime = 5000; // 5 seconds spin
+                const totalRotations = 10;
+                const randomOffset = Math.random() * (2 * Math.PI);
+                const spinAngle = totalRotations * (2 * Math.PI) + randomOffset;
+                const spinTime = 5000;
 
                 canvas.style.transition = `transform ${spinTime}ms cubic-bezier(0.25, 1, 0.5, 1)`;
                 canvas.style.transform = `rotate(${spinAngle}rad)`;
                 
                 setTimeout(() => {
-                    const currentRotationRad = spinAngle % (2 * Math.PI);
-                    const currentRotationDeg = currentRotationRad * 180 / Math.PI;
+                    const finalRotation = spinAngle % (2 * Math.PI);
                     const degreesPerSegment = 360 / this.segments.length;
-                    const winningIndex = Math.floor(((360 - currentRotationDeg) % 360) / degreesPerSegment);
+                    const winningIndex = Math.floor(( (2*Math.PI) - finalRotation) / (2*Math.PI) * this.segments.length) % this.segments.length;
                     const result = this.segments[winningIndex];
                     
                     this.showResult(result);
                     canvas.style.transition = 'none';
-                    canvas.style.transform = `rotate(${currentRotationRad}rad)`;
+                    canvas.style.transform = `rotate(${finalRotation}rad)`;
                 }, spinTime);
             }
 
@@ -929,7 +951,12 @@
                     <div class="setting"><label for="timePerTurn">Time per turn:</label><select id="timePerTurn"><option value="60" selected>60s</option><option value="90">90s</option><option value="120">120s</option></select></div>
                     <div class="setting"><label for="difficulty">Difficulty:</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
                 `;
-                const intro = this.createIntroPanel("Draw & Guess", "One person draws the word on screen. The rest guess! Pass the phone to the drawer to start.", settingsHtml, () => this.showPassScreen());
+                const startCallback = () => {
+                    this.config.time = parseInt(document.getElementById('timePerTurn').value, 10);
+                    this.config.difficulty = document.getElementById('difficulty').value;
+                    this.showPassScreen();
+                };
+                const intro = this.createIntroPanel("Draw & Guess", "One person draws the word on screen. The rest guess! Pass the phone to the drawer to start.", settingsHtml, startCallback);
                 this.container.appendChild(intro);
             }
 
@@ -937,6 +964,7 @@
                 this.container.innerHTML = '';
                 this.container.appendChild(this.createHeader());
                 const passScreen = document.createElement('div');
+                passScreen.className = 'game-container';
                 passScreen.innerHTML = `<p style="font-size: 1.5rem; margin: 40px 0;">Pass to the Drawer. Don't let others see the word!</p>`;
                 const readyButton = document.createElement('button');
                 readyButton.className = 'primary-button';
@@ -947,7 +975,8 @@
             }
 
             runGame() {
-                this.loadWordPool('difficulty');
+                this.wordPool = [...(this.words[this.config.difficulty] || [])];
+                this.shuffleArray(this.wordPool);
                 this.container.innerHTML = ''; 
                 
                 const wordToDraw = this.getNextWord();
@@ -971,18 +1000,16 @@
                 doneButton.textContent = 'Team Guessed It!';
                 doneButton.onclick = () => this.endGame(true);
 
-                this.container.append(wordDisplay, timerDisplay, canvas, controls, doneButton);
+                this.container.append(this.createHeader(), wordDisplay, timerDisplay, canvas, controls, doneButton);
                 this.bindCanvasEvents(canvas);
                 
-                const timePerTurn = parseInt(document.getElementById('timePerTurn').value, 10);
-                this.startTimer(timePerTurn, timerDisplay, () => this.endGame(false));
+                this.startTimer(this.config.time, timerDisplay, () => this.endGame(false));
             }
 
             createDrawingControls() {
                 const controlsContainer = document.createElement('div');
                 controlsContainer.className = 'pictionary-controls';
                 
-                // Color pickers
                 ['#000000', '#FF0000', '#0000FF', '#008000', '#FFFF00', '#FFFFFF'].forEach(color => {
                     const colorInput = document.createElement('input');
                     colorInput.type = 'color';
@@ -991,7 +1018,6 @@
                     controlsContainer.appendChild(colorInput);
                 });
 
-                // Brush sizes
                 [2, 5, 10].forEach(size => {
                     const sizeButton = document.createElement('div');
                     sizeButton.className = 'brush-size';
@@ -1005,7 +1031,6 @@
                     controlsContainer.appendChild(sizeButton);
                 });
 
-                // Clear button
                 const clearButton = document.createElement('button');
                 clearButton.className = 'secondary-button';
                 clearButton.textContent = 'Clear';
@@ -1031,6 +1056,7 @@
                 const stopDrawing = () => { this.drawing = false; };
                 const draw = (e) => {
                     if (!this.drawing) return;
+                    e.preventDefault();
                     const pos = getPos(e);
                     this.ctx.lineWidth = this.brushSize;
                     this.ctx.strokeStyle = this.brushColor;
@@ -1042,9 +1068,9 @@
                 canvas.addEventListener('mouseup', stopDrawing);
                 canvas.addEventListener('mouseleave', stopDrawing);
                 canvas.addEventListener('mousemove', draw);
-                canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false });
-                canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); }, { passive: false });
-                canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, { passive: false });
+                canvas.addEventListener('touchstart', startDrawing, { passive: false });
+                canvas.addEventListener('touchend', stopDrawing, { passive: false });
+                canvas.addEventListener('touchmove', draw, { passive: false });
             }
 
             endGame(guessedCorrectly) {
@@ -1072,7 +1098,6 @@
         };
 
         function loadGame(gameId) {
-            // Clear previous game instance if exists
             if (appState.currentGameInstance) {
                 appState.currentGameInstance.destroy();
             }
@@ -1085,7 +1110,7 @@
             }
 
             const mainContainer = document.getElementById('gb-app');
-            mainContainer.innerHTML = ''; // Clear hub content
+            mainContainer.innerHTML = '';
             mainContainer.classList.add('page-enter');
             
             appState.currentGameInstance = new gameData.class(mainContainer);
@@ -1101,7 +1126,7 @@
             }
             
             const mainContainer = document.getElementById('gb-app');
-            mainContainer.innerHTML = '';
+            mainContainer.innerHTML = '<h1>Game Hub</h1>';
             mainContainer.classList.add('page-enter');
 
             const hubGrid = document.createElement('div');
@@ -1126,7 +1151,6 @@
             requestAnimationFrame(() => mainContainer.classList.add('page-enter-active'));
         }
 
-        // Initial load
         document.addEventListener('DOMContentLoaded', renderHub);
     </script>
 </body>
